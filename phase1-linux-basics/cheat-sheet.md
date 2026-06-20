@@ -17,10 +17,10 @@
 
 GIT:
 
-- add .
+- add <file> : stage changes for commit
 
-- commit -m "<message>"
+- commit -m "<message>" : commit to the repository
 
-- push
+- push : update remote repository from your local 
 
 
