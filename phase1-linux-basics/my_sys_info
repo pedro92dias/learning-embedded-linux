@@ -1,0 +1,115 @@
+#!/bin/bash
+
+# Produces a small html file with system info
+
+## Constants
+if [ "$1" != "" ]; then
+    FILE_NAME=${1}
+else
+    echo "Assuming default name..."
+    FILE_NAME="my_report.html"
+fi
+TITLE="My System Information - machine $HOSTNAME"
+TIME_STAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+
+## Functions
+# Tells us about the system we're running on
+get_system_info()
+{
+    echo "<h2>System Information</h2>"
+    echo "<pre>$(uname -a)</pre>"
+}
+
+# Get make and model of current CPU
+get_cpu_info()
+{
+    echo "<h2>CPU Information</h2>"
+    echo "<pre>$(lscpu | head -n 8)</pre>"
+}
+
+# Tells how long we've been running since boot
+get_up_time()
+{
+    echo "<h2>System Uptime</h2>"
+    echo "<pre>$(uptime)</pre>"
+}
+
+# We want to know how much space is left on the drive
+get_drive_space()
+{
+    echo "<h2>Drive Space</h2>"
+    echo "<pre>Total of $(df -h | wc -l) filesystems found...</pre>"
+    echo "<pre>$(df -h | grep -E 'Filesystem|^/dev/')</pre>"
+
+}
+
+# Find total space for home directory
+get_home_space()
+{
+    echo "<h2>Home Space</h2>"
+    echo "<pre>$(du -hc ~ | grep -E 'total')</pre>"
+}
+
+
+## main
+
+# Read user input
+# -n is no new newline
+echo -n "What's your name? "
+read CALLER_NAME
+# alternatively:
+# read -p "What's your name? " CALLER_NAME
+
+# Use an if construct
+if [ "$(id -u)" = "0" ]; then
+    echo "You are a super user, $CALLER_NAME!"
+elif [ "$(id -u)" = "1000" ]; then
+    echo "You are a normal user, $CALLER_NAME!"
+else
+    echo "What the hell are you, $CALLER_NAME?"
+fi
+
+# Try a case statement
+case "$(id -u)" in
+    0)
+        echo "You are indeed a super user, $CALLER_NAME!"
+        ;;
+    1000)
+        echo "You are indeed a normal user, $CALLER_NAME!"
+        ;;
+    *)
+        echo "Wait... What the hell are you, $CALLER_NAME?"
+        ;;
+esac
+
+# Try a while loop
+echo "Abracadabra, tap your enter 5 times..."
+COUNT=5
+while [ $COUNT -gt 0 ]; do
+    # Some random characters, lifted straight from some website
+    read
+    tr -dc '!@#$%^&*()_+=-{}[]|\\:;"<>,.?/~`' < /dev/urandom | dd bs=1 count=32 2>/dev/null; echo
+    COUNT=$((COUNT-1))
+done
+
+cat <<- _EOF_ > "$FILE_NAME"
+    <html>
+    <head>
+        <title> $TITLE </title>
+    </head>
+
+    <body>
+        <h1>$TITLE</h1>
+        <p> Report updated on $TIME_STAMP by $USER</p>
+        $(get_system_info)
+        $(get_cpu_info)
+        $(get_up_time)
+        $(get_drive_space)
+        $(get_home_space)
+    </body>
+    </html>
+_EOF_
+
+echo "Report written to $FILE_NAME... Exiting!"
+exit 0 # success
+#exit 1 # failure

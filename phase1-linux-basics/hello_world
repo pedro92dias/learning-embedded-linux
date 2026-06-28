@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Shebang above indicates which program shall interpret the script
+
+# Notice that this must be made executable (for me, owner) by running
+# chmod 744 script.sh
+
+# We can put this script in the path so we don't need ./ to call it
+# export PATH=$PATH:$(pwd)
+
+echo "Hello World!"
+
+# <<- ignores leading tabs (but not spaces)
+# << doesn't ignore leading tabs
+cat << _EOF_
+    this is my first script
+    please run it and enjoy
+_EOF_
+

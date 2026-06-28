@@ -24,14 +24,26 @@
 - type \<cmd\>: gives info on a command, where to find it for example
 - which \<executable\>: exact location of an executable
 - du \<file, directory\>: display size, -h for human readable
+- df : display size usage of mounted filesystems
+
 - grep: search
     - grep [options] pattern [file]
     - examples: 
       grep 'someregexpattern' ./* 
       grep -E '^\#\#' cheat-sheet.md
+
 - echo (see below)
 - printenv : prints all environment variables (e.g. $USER)
 - export \<var\>="something" : sets an environment variable (use echo $var to print)
+  - example, add a directory to the PATH:
+    export PATH=$PATH:$(pwd)  --> see command substitution below
+
+- alias : sets up an alternative name for a long command
+  Example: alias l='ls -shal'
+
+- sudo : super-user
+- id : current user
+
 
 
 ## Finding help
@@ -140,6 +152,11 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
     example: 
      ll /s* | less : search all files or directors in / starting with s and display the output with less
      cat unsorted_list_with_dupes.txt | sort | uniq | pr | lpr
+- Special form: a here script
+  cat << SomeMarker
+   ..
+    ...
+  SomeMarker
 
 ## Expansion 
 
@@ -185,5 +202,22 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
     - SIGTERM : termination, the default signal sent by kill, the program listens
     - SIGKILL : kill, immediate termination by the kernel (program doesn't listen to this)
     
+## Vim
+
+- Different modes:
+  - Esc enters normal mode, for navigation and editing
+  - i enters insert mode, for inserting and modifying text
+  - Esc + \: enters the command line mode
+
+- Basic commands:
+  - vim \<file\> opens a file or modifies it
+  - :q! quits without saving
+  - :wq! saves the modifications and quits
+  - /key_word searches for key_word, n jumps to the next match
+  - v selects text
+  - d cuts the text
+  - y copies the text
+  - p pastes the text
+
 
 
