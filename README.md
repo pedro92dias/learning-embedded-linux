@@ -12,6 +12,10 @@ _My goals are roughly:_
   - processes and internals
   - networking and using SSH/SCP
   - install a toolchain, compile a simple hello-world, transfer to the Pi
+ 
+  References:
+  - https://linuxcommand.org/index.php
+  - 
 
 - Phase 2: Linux and hardware. To be detailed
 
