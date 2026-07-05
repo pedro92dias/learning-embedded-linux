@@ -61,4 +61,6 @@ Non-login shells inherit the environment from their parent process (usually a lo
 
 ## Bash scripts
 
-(see examples in the folder)
+- Reference: https://linuxcommand.org/lc3_writing_shell_scripts.php#contents
+- (see examples in the folder)
+- Positional parameters, control flow, errors and signals, etc...

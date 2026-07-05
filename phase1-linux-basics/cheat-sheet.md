@@ -1,7 +1,7 @@
 # Command cheat-sheet
 
 
-## Basics 
+## Basics
 
 - pwd: print current dir
 - cd: come on...
@@ -14,7 +14,7 @@
   - -h human-readable size
   - -l list in long format:
     permissions, owner, group, size, mod time, name
-    - note on permissions: 
+    - note on permissions:
       - \- is a normal file, d is directory, l is a link
       - rwx for owner/group/everybody else
       See here: https://linuxcommand.org/images/file_permissions.png
@@ -28,8 +28,8 @@
 
 - grep: search
     - grep [options] pattern [file]
-    - examples: 
-      grep 'someregexpattern' ./* 
+    - examples:
+      grep 'someregexpattern' ./*
       grep -E '^\#\#' cheat-sheet.md
 
 - echo (see below)
@@ -51,7 +51,7 @@
 - help \<built-in\>: reference page for shell builtins (like cd)
 - \<command\> --help: many programs offer a help page
 - man \<command>\: many programs offer a manual page (uses less to display)
-- a lot of documentation can be found in /usr/share/doc 
+- a lot of documentation can be found in /usr/share/doc
 
 ## less:
 
@@ -66,11 +66,11 @@
 ## GIT:
 
 Passwords are no longer accepted. Setup an SSH key:
-https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54l1 
+https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54l1
 
 - add \<file\> : stage changes for commit
 - commit -m "\<message\>" : commit to the repository
-- push : update remote repository from your local 
+- push : update remote repository from your local
 
 ## ln:
 
@@ -119,13 +119,18 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
   - cp file1 dir1 (creates file1 inside dir1)
   - cp -i (interactive, asks before overwritting)
 - mv: move or rename
-- rm: remove 
+- rm: remove
   - rm file1 file2 file3
   - \-r dir1 recursive remove inside the directory
   - \-i interactive
   - useful trick: construct the command but using ls first. Make sure it won't remove anything you don't want removed.
 
-- echo: a shell built in that prints its arguments 
+## Some bash script stuff
+
+- Online reference: https://linuxcommand.org/lc3_writing_shell_scripts.php
+- Refer to my_sys_info, a play script with lots of examples
+
+- echo: a shell built in that prints its arguments
   - if the argument expends into something, echo will show us that.
   - see the expansion chapter below
   - example:
@@ -142,6 +147,21 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
       echo {A..Z}{A..Z}-{0..9}{0..9}-{A..Z}{A..Z} > all_plates.txt
     - create a file with all letters in each line:
       echo {A..Z} | tr ' ' '\n' > all_letters.txt
+- shift: shell builtin to shift all positional parameters one position down
+- "$$" current PID
+- "$?" allows us to get the last exit status
+  - 0 OK
+  - \> 0 NOT OK
+  - careful when using if - the 0 is true: if cd "$some_directory"; then OK else NOK
+- exit x: exits with code n
+- $LINENO returns the current line number
+- trap: trap signals and events
+  - l: shows a list of all traps
+  - defines commands to be executed when a signal is received
+    example: trap 'echo "oopsi... SIGINT received"; exit 1;" SIGINT
+             trap clean_up_func SIGINT SIGTERM SIGHUP
+  - see section Job Control below
+
 
 ## Redirection
 
@@ -149,7 +169,7 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 - \>\> output to append file
 - \< input to command
 - \| pipelines the output of one command to another.
-    example: 
+    example:
      ll /s* | less : search all files or directors in / starting with s and display the output with less
      cat unsorted_list_with_dupes.txt | sort | uniq | pr | lpr
 - Special form: a here script
@@ -158,28 +178,28 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
     ...
   SomeMarker
 
-## Expansion 
+## Expansion
 
-  - pathname expansion: see the echo examples 
+  - pathname expansion: see the echo examples
   - tilde expansion: ~ is home
   - arithmetic expansion: see the echo instructions above
   - parameter expansion: printenv and export, e.g.
     - export HANDSOME="pedro"
     - echo $HANDSOME
-  - command substitution: similar to pathname expansion, e.g. 
+  - command substitution: similar to pathname expansion, e.g.
     - ls -sh $(which ruby)
     - file $(ls /usr/bin/* | grep bin/zip)
   - double quotes: supress word-splitting, pathname, tilde, and brace expansion (keep parameter, arithmetic and command expansions)
   - single quotes: supress ALL expansions
-  
+
 
 ## TAR (tape archive record)
 
-- tar -xvzf files.tar.gz - C my_files: 
+- tar -xvzf files.tar.gz - C my_files:
   - x: extract (opposite of collect)
   - v: verbose output
   - z: decompress using gzip
-  - f: file immediately after 
+  - f: file immediately after
   - -C: directory with a name of choice
 
 ## Job control
@@ -197,11 +217,11 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 - kill \<process_number\> or %\<job_number\>: kill a process
   example: kill %1 or kill 1234
   - can send OS signals to the process, example:
-    - SIGHUP : hang-up, sent when terminal is closed, the program listens 
+    - SIGHUP : hang-up, sent when terminal is closed, the program listens
     - SIGINT : interrupt the process (ctrl-c), the program listens
     - SIGTERM : termination, the default signal sent by kill, the program listens
     - SIGKILL : kill, immediate termination by the kernel (program doesn't listen to this)
-    
+
 ## Vim
 
 - Different modes:

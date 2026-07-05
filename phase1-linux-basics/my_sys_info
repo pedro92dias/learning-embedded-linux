@@ -3,6 +3,8 @@
 # Produces a small html file with system info
 
 ## Constants
+# $1 is the first argument passed to the script
+# That's called position parameter
 if [ "$1" != "" ]; then
     FILE_NAME=${1}
 else
@@ -50,6 +52,15 @@ get_home_space()
     echo "<pre>$(du -hc ~ | grep -E 'total')</pre>"
 }
 
+error_exit_func()
+{
+    echo "Error occurred at line $1 of ${PROGNAME}... exiting!"
+    exit 1
+}
+
+# Define something to happen when we receive a signal
+trap 'echo "oopsi... SIGINT received"; exit 1;' SIGINT
+
 
 ## main
 
@@ -60,7 +71,14 @@ read CALLER_NAME
 # alternatively:
 # read -p "What's your name? " CALLER_NAME
 
-# Use an if construct
+# We can (and should) check for errors
+if [ "$?" = "0" ]; then
+    echo "Hello, $CALLER_NAME!"
+else
+    error_exit_func "$LINENO"
+fi
+
+# Use an if construct to check if the user is root
 if [ "$(id -u)" = "0" ]; then
     echo "You are a super user, $CALLER_NAME!"
 elif [ "$(id -u)" = "1000" ]; then
@@ -69,7 +87,7 @@ else
     echo "What the hell are you, $CALLER_NAME?"
 fi
 
-# Try a case statement
+# Try a case statement, same thing
 case "$(id -u)" in
     0)
         echo "You are indeed a super user, $CALLER_NAME!"
@@ -86,7 +104,7 @@ esac
 echo "Abracadabra, tap your enter 5 times..."
 COUNT=5
 while [ $COUNT -gt 0 ]; do
-    # Some random characters, lifted straight from some website
+    # Some random characters
     read
     tr -dc '!@#$%^&*()_+=-{}[]|\\:;"<>,.?/~`' < /dev/urandom | dd bs=1 count=32 2>/dev/null; echo
     COUNT=$((COUNT-1))
