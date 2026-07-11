@@ -1,7 +1,7 @@
 # learning-embedded-linux
-Notes, experiments and projects, as I build embedded Linux skills. 
+Notes, experiments and projects, as I build embedded Linux skills.
 
-Coming from an electrical engineering background and bare-metal work experience, I thought it was career relevant to learn more about Linux and build additional skills as an embedded engineer. One of my ideas is also to rediscover the passion for creating and learning a new topic - this is something I've neglected for a while. 
+Coming from an electrical engineering background and bare-metal work experience, I thought it was career relevant to learn more about Linux and build additional skills as an embedded engineer. One of my ideas is also to rediscover the passion for creating and learning a new topic - this is something I've neglected for a while.
 
 _My goals are roughly:_
 
@@ -12,10 +12,10 @@ _My goals are roughly:_
   - processes and internals
   - networking and using SSH/SCP
   - install a toolchain, compile a simple hello-world, transfer to the Pi
- 
+
   References:
-  - https://linuxcommand.org/index.php
-  - 
+  - https://linuxcommand.org/index.php : good for command line basics and the bash scripting part
+  - https://bootlin.com/blog/command-line/ : overlaps a bit with linuxcommand but adds a bit
 
 - Phase 2: Linux and hardware. To be detailed
 
@@ -23,6 +23,6 @@ _My goals are roughly:_
 
 - Phase 4: A project?
 
-While doing this, I intend to keep notes and cheat-sheets for future use. I always found my memory to be a weakness - so I became good at documenting :)
+While doing this, I intend to keep notes and cheat-sheets for future use. I always found my memory to be a weakness - so I had to become good at documenting :)
 
 pedro.d.amaral@gmail.com

@@ -1,5 +1,7 @@
 # Command cheat-sheet
 
+https://bootlin.com/doc/legacy/command-line/command_memento.pdf
+https://linuxcommand.org/lc3_man_page_index.php#other
 
 ## Basics
 
@@ -13,18 +15,15 @@
   - -s size
   - -h human-readable size
   - -l list in long format:
-    permissions, owner, group, size, mod time, name
-    - note on permissions:
-      - \- is a normal file, d is directory, l is a link
-      - rwx for owner/group/everybody else
-      See here: https://linuxcommand.org/images/file_permissions.png
-      - see chmod below
+    see permissions below
+
+- find \<path\> -name \<pattern\> : find a file
+    - example: . -name "*.pdf" finds a file in current dir matching a pattern
+
 
 - file \<file\>: tells information about a file
 - type \<cmd\>: gives info on a command, where to find it for example
 - which \<executable\>: exact location of an executable
-- du \<file, directory\>: display size, -h for human readable
-- df : display size usage of mounted filesystems
 
 - grep: search
     - grep [options] pattern [file]
@@ -33,13 +32,28 @@
       grep -E '^\#\#' cheat-sheet.md
 
 - echo (see below)
-- printenv : prints all environment variables (e.g. $USER)
+- env or printenv : prints all environment variables (e.g. $USER)
 - export \<var\>="something" : sets an environment variable (use echo $var to print)
   - example, add a directory to the PATH:
     export PATH=$PATH:$(pwd)  --> see command substitution below
 
+  - some important environment variables:
+    LD_LIBRARY_PATH : shared library search path
+    DISPLAY
+    EDITOR : the default
+    HOME : current home directory
+    HOSTNAME : name of the machine
+    PATH : command search path
+    SHELL : current shell name
+    TERM : current terminal type
+    USER : current user name
+
 - alias : sets up an alternative name for a long command
   Example: alias l='ls -shal'
+- history : shows last commands
+  !! shows the last one
+  !10 shows by number
+  !cat shows the latest matching the start string cat
 
 - sudo : super-user
 - id : current user
@@ -52,15 +66,40 @@
 - man \<command>\: many programs offer a manual page (uses less to display)
 - a lot of documentation can be found in /usr/share/doc
 
-## less:
 
-- less \<name\>
-- page up / b: back
-- page down / space: forward
-- G: end of file
-- 1G: beginning of file
-- h: help
-- q: quit
+## Displaying file content:
+
+- less
+  - page up / b: back
+  - page down / space: forward
+  - G: end of file
+  - 1G: beginning of file
+  - h: help
+  - q: quit
+
+- vim
+  - Different modes:
+    - Esc enters normal mode, for navigation and editing
+    - i enters insert mode, for inserting and modifying text
+    - Esc + \: enters the command line mode
+
+  - Basic commands:
+    - vim \<file\> opens a file or modifies it
+    - :q! quits without saving
+    - :wq! saves the modifications and quits
+    - /key_word searches for key_word, n jumps to the next match
+    - v selects text
+    - d cuts the text
+    - y copies the text
+    - p pastes the text
+
+- cat
+  - concatenate
+
+- tail / head:
+  - \-n : displays first or last n lines of a file
+  - \-f : follows the end of the file when using tail, useful to watch logs
+
 
 ## GIT:
 
@@ -72,14 +111,35 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 - push : update remote repository from your local
 - pull : fetch from repository or branch
 
-## ln:
+## Symbolic links:
 
-- create symbolic link
-- ...
+- ln -s file_name link_name
+  - create symbolic link
+- ln -s ../README.txt
+  - creates a link here to a file in another directory, same name
+- ln -s file1 file2 fil3 dir
+  - multiple links
+- rm : only removes the link, not the file
+- ls -l displays the link
 
 ## Permissions
 
 - Reference: https://linuxcommand.org/lc3_lts0090.php
+- ls -l to show permissions
+    permissions, owner, group, size, mod time, name
+    - note on permissions:
+      - \- is a normal file, d is directory, l is a link
+      - rwx for owner/group/everybody else
+      - t is a sticky bit, e.g. /tmp has drwxrwxrwt so that each user can delete only their own
+      See here: https://linuxcommand.org/images/file_permissions.png
+
+      Type  Owner  Group  World
+        |      |      |      |
+        v      v      v      v
+        -     rw-    r--    r--
+
+      (r=read, w=write, x=execute, -=none)
+
 - chmod \<permission\> \<file\>
     rwx rwx rwx = 111 111 111
     rw- rw- rw- = 110 110 110
@@ -99,8 +159,22 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
     666 - all users may read and write the file
     644 - owner may ready and write, others may only read
     600 - only owner may write, others can't do anything
+
+  - R recursive
+  - u = user, g = group, o = other, a = all
+  - \+ = add, - = remove
+  - example: chmod u-w removes write access for user, chmod a-x adds execute access for all
+
 - chown \<user\> \<file\> : change the owner (must be called as superuser)
-- chgp \<group\> \<file\> : change the group ownership (must be owner of file or dir)
+  example:
+  - chown -R pedro /home/linux/src
+    now pedro is the owner of all files in the directory
+
+- chgrp \<group\> \<file\> : change the group ownership (must be owner of file or dir)
+  example:
+  - chgrp -R empire /home/
+    now everything under home belongs to the group empire
+
 
 ## Manipulating files
 
@@ -124,8 +198,16 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
   - \-r dir1 recursive remove inside the directory
   - \-i interactive
   - useful trick: construct the command but using ls first. Make sure it won't remove anything you don't want removed.
-
--awk : text processing command, ideal for columns
+- mkdir
+- rmdir : same as rm -r but only works on empty dirs
+- sort : sorts lines in a file
+  - \-r : in reverse order
+  - \-u : unique
+- awk : text processing command, ideal for columns
+- sed : stream editor
+  - mostly used to replace text, e.g. sed -e 's/abc/def/ file replaces abc for def in file
+  - uses regexes:
+    good ol' https://rubular.com/
   -
 
 ## Some bash script stuff
@@ -168,18 +250,32 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 
 ## Redirection
 
-- \> output to create file
-- \>\> output to append file
-- \< input to command
-- \| pipelines the output of one command to another.
+- \> redirect standard output to create existing or new file
+
+- \>\> redirect standard output to append existing file
+
+  - the descriptor for the standard output is 1
+  - standard error can be directed via 2> or 2>>
+  - the descriptor for both is &, e.g. &> or &>>
+
+
+- \< tells command to take arguments from standard input
+
+- \| pipelines direct the standard output of one command to the standard input of another.
     example:
      ll /s* | less : search all files or directors in / starting with s and display the output with less
      cat unsorted_list_with_dupes.txt | sort | uniq | pr | lpr
-- Special form: a here script
+
+- Special form: a here-script or here-doc
   cat << SomeMarker
    ..
     ...
   SomeMarker
+
+- tee sends to a file + to the display
+  e.g. ls | tee results.txt shows the command standard output + writes it to a file
+
+
 
 ## Expansion
 
@@ -192,55 +288,79 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
   - command substitution: similar to pathname expansion, e.g.
     - ls -sh $(which ruby)
     - file $(ls /usr/bin/* | grep bin/zip)
+    - echo "I'm using linux $(uname -r)"
   - double quotes: supress word-splitting, pathname, tilde, and brace expansion (keep parameter, arithmetic and command expansions)
   - single quotes: supress ALL expansions
 
 
-## TAR (tape archive record)
-
-- tar -xvzf files.tar.gz - C my_files:
-  - x: extract (opposite of collect)
-  - v: verbose output
-  - z: decompress using gzip
-  - f: file immediately after
-  - -C: directory with a name of choice
-
 ## Job control
 
 - ps : list processes
+  - ps -ux : all processes belonging to current user
+  - ps -aux : all processes running in the system
+
+  Info:
+    PID: Process id
+    VSZ: Virtual process size (code + data + stack)
+    RSS: Process resident size: number of KB currently in RAM
+    TTY: Terminal
+    STAT: Status: R (Runnable), S (Sleep), W (paging), Z (Zombie)..
+
+- top : lists most intensive processes, by CPU
+
 - jobs : lists own processes, ran by the user (simpler)
 
 - \<program\> + ctrl-z : start a program and suspend
 - bg : place a job in background execution
-- fg : place a job in foreground execution
+- fg \<job_number\>: places the last or nth job in foreground execution
 
 - \<program\> & : start a program and send to background
   - ctrl+z
 
-- kill \<process_number\> or %\<job_number\>: kill a process
+- kill -\<signal\> \<process_number\> or %\<job_number\>: kill a process (PID) or the nth job
   example: kill %1 or kill 1234
-  - can send OS signals to the process, example:
+  example: kill all own processes kill -9 -1, -9 is the signal to kill, -1 is all
+
+  - Some OS signals:
     - SIGHUP : hang-up, sent when terminal is closed, the program listens
     - SIGINT : interrupt the process (ctrl-c), the program listens
     - SIGTERM : termination, the default signal sent by kill, the program listens
     - SIGKILL : kill, immediate termination by the kernel (program doesn't listen to this)
 
-## Vim
-
-- Different modes:
-  - Esc enters normal mode, for navigation and editing
-  - i enters insert mode, for inserting and modifying text
-  - Esc + \: enters the command line mode
-
-- Basic commands:
-  - vim \<file\> opens a file or modifies it
-  - :q! quits without saving
-  - :wq! saves the modifications and quits
-  - /key_word searches for key_word, n jumps to the next match
-  - v selects text
-  - d cuts the text
-  - y copies the text
-  - p pastes the text
+- time \<command\> : shows time elapsed to complete a task
+    real = user + sys + waiting time
+    - real: actual elapsed time
+    - user: CPU time running program code
+    - sys: CPU time running system calls
 
 
+## Compressing or archiving files
 
+- du \<file, directory\>: display size,
+  - -h for human readable
+  - -s sum
+
+- df : display size usage of mounted filesystems
+  - -h for human readable
+
+- g[un]zip : compresses a file
+  - can also use b[un]zip2
+  - can also use [un]lzma
+
+- TAR (tape archive record)
+  - tar -xvzf files.tar.gz - C my_files:
+    - c: create
+    - x: extract (opposite of collect)
+    - v: verbose output
+    - z: decompress using gzip
+    - f: file immediately after
+    - t: test
+    - -C: directory with a name of choice
+
+- md5sum : computes a MD5 128 bit checksum of a given file
+  example md5sum my_file.iso > MD5SUM
+  -c : checks, for example md5sum -c MD5SUM
+
+## SSH and SCP
+
+- TODO! also check rsync!
