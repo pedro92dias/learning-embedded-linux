@@ -298,13 +298,24 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 - ps : list processes
   - ps -ux : all processes belonging to current user
   - ps -aux : all processes running in the system
+  - ps -eLf : shows lightweight processes (threads)
 
   Info:
     PID: Process id
+    LWP: Thread id (lightweight process)
+    NLWP: Number of threads
     VSZ: Virtual process size (code + data + stack)
     RSS: Process resident size: number of KB currently in RAM
     TTY: Terminal
     STAT: Status: R (Runnable), S (Sleep), W (paging), Z (Zombie)..
+
+- strace can help to observe the process creation flow
+    example with ls: strace -f -etrace=execve,clone bash -c '{ ls; }'
+      - 1st clone: we create a process as a clone of the bash
+      - 2nd execve: replaces the current executable in the process with the ls binary
+
+- pstree helps to visualize the process hierarchy, up to systemd (PID 1)
+  - add -p for PIDs, ex: pstree -p | head -n10
 
 - top : lists most intensive processes, by CPU
 
@@ -364,3 +375,38 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 ## SSH and SCP
 
 - TODO! also check rsync!
+
+
+## Makefile
+
+See examples
+- General rule:
+  targets : prerequisites
+    command
+    @command
+
+  - rule only runs if target doesn't exist
+  - command lines must start with a tab
+  - @ silences a command
+  - make without arguments runs the first rule
+    - the first rule can be all:
+
+  - $@ is an automatic variable for the target name
+  - $? is an automatic variable for all prerequisites newer than the target
+  - $^ is an automatic variable for all prerequisites
+  - $< is an automatic variabel for the first prerequisite
+  - * is a wildcard, can be used like $(wilcard *.c)
+
+## GDB
+
+- text based debugger
+- ddd is a graphical gdb, might be worth looking
+- some commands:
+  - run : start running
+  - b : break, e.g. b func
+  - p : print, e.g. p arg1
+  - c : continue until next breakpoint
+  - n : step over
+  - s : step into
+  - bt: backtrace shows function call stack
+  - quit : exit

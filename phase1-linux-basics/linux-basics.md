@@ -49,14 +49,6 @@
 - /dev/urandom : pseudo random, used when a true source of randomness doesn't exist
 
 
-## Tasks
-
-- Process: instance of a running program
-  - several processes can run at the same time
-  - a process has open files, allocated memory, stack, PID, parent, priority, state...
-  - see Job Control in cheat-sheet.md
-
-
 ## Types of files
 
 Almost everything in Unix is a file: directories, symbolic links, peripherals, devices, pipes, sockets
@@ -90,6 +82,79 @@ Almost everything in Unix is a file: directories, symbolic links, peripherals, d
     (Data)                  (Data)<------+
 
 
+## Tasks
+
+A good reference: https://www.baeldung.com/linux/process-vs-thread#differences-between-process-and-thread
+
+- Process: instance of a running program
+  - a process has own memory, open files, stack, PID, parent, priority, state...
+  - switching between processes takes time (context switching)
+  - see Job Control in cheat-sheet.md
+
+
+- Threads: lightweight process
+  - threads share resources and memory with the parent process and other threads
+  - threads have a unique stack but share heap
+  - thread switching is fast
+  - ps -eLf : shows lightweight processes (threads)
+
+  PROCESS                                     | THREAD
+  -------------------------------------------------------------------------------------------------------
+  A process is heavyweight.                   | A thread is a lightweight process also called an LWP.
+                                              |
+  A process has its own memory.               | A thread shares the memory with the parent process
+                                              | and other threads within the process.
+                                              |
+  Inter-process communication is slower due   | Inter-thread communication is faster due to shared
+  to isolated memory.                         | memory.
+                                              |
+  Context switching between processes is      | Context switching between threads is less expensive
+  expensive due to saving old and loading     | due to shared memory.
+  new process memory and stack info.          |
+                                              |
+  An application with several processes for   | When memory is scarce, the multi-threaded application
+  its components can provide better memory    | does not provide any provision to manage memory.
+  utilization when memory is scarce. We can   |
+  assign low priority to inactive processes   |
+  in the application. This idle process is    |
+  then eligible to be swapped to disk. This   |
+  keeps the active components responsive.     |
+
+
+  - System calls:
+    - fork (or clone) create a child process equivalent to parent process
+    - execve replaces the current process with a child process
+
+  - Processes internally:
+    - Linux creates every process using a data structure in C called task_struct
+    - the kernel holds them in a dynamic list to represent all the running processes called tasklist (elements of task_struct type)
+    - inside the task structure there are
+        scheduling parameters, memory image, signals, system calls state, file descriptors, kernel stack, etc.
+
+  - strace can help to observe the process creation flow
+      example with ls: strace -f -etrace=execve,clone bash -c '{ ls; }'
+        - 1st clone: we create a process as a clone of the bash
+        - 2nd execve: replaces the current executable in the process with the ls binary
+
+  - pstree helps to visualize the process hierarchy, up to systemd (PID 1)
+    - add -p for PIDs, ex: pstree -p | head -n10
+
+  - Threads internally:
+    - the clone system call is also used to create a thread, it's very versatile
+    - use flags to select what you want:
+      pid = clone(function, stack ptr, sharing flags, arg);
+
+        Flag            | Meaning when set                         | Meaning when cleared
+        ---------------------------------------------------------------------------------------------
+        CLONE_VM        | Create a new thread                      | Create a new process
+        CLONE_FS        | Share umask, root, and working dirs      | Do not share them
+        CLONE_FILES     | Share the file descriptors               | Copy the file descriptors
+        CLONE_SIGHAND   | Share the signal handler table           | Copy the table
+        CLONE_PARENT    | New thread has same parent as the caller | New thread's parent is caller
+
+    - POSIX (Portable Operating System Interface) is one way to standardize the creation of threads/processes across Unix/Linux/their variants.
+
+
 ## Shells
   - Tools to execute user commands
   - Can be scripted
@@ -119,3 +184,14 @@ Non-login shells inherit the environment from their parent process (usually a lo
 - Reference: https://linuxcommand.org/lc3_writing_shell_scripts.php#contents
 - (see examples in the folder)
 - Positional parameters, control flow, errors and signals, etc...
+
+## Using libraries
+
+- Any Linux system supports GNU C library glibc
+- Many other libraries can be obtained, usually in two packages:
+  - libpedro : containing the library itself - enough for executing already compiled applications
+  - libpedro-dev : containing header files and other configuration stuff - to develop new applications that need libpedro
+
+- headers are usually placed in /usr/include
+- libraries are usually present in /lib
+- ldd tells which libraries a certain application requires and where they are located

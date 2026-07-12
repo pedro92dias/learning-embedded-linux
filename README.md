@@ -9,13 +9,16 @@ _My goals are roughly:_
   - use the terminal
   - common commands, shell, file system fundamentals, navigate, permissions...
   - bash scripting
-  - processes and internals
+  - processes and internals, threads, system calls, etc...
   - networking and using SSH/SCP
   - install a toolchain, compile a simple hello-world, transfer to the Pi
+  - revisit git and makefiles
 
   References:
   - https://linuxcommand.org/index.php : good for command line basics and the bash scripting part
-  - https://bootlin.com/blog/command-line/ : overlaps a bit with linuxcommand but adds a bit
+  - https://bootlin.com/blog/command-line/ : overlaps a bit with linuxcommand but adds about processes and job control. Also a bit about compiling a simple app.
+  - https://www.baeldung.com/linux/process-vs-thread#differences-between-process-and-thread : a bit about processes and threads
+  -
 
 - Phase 2: Linux and hardware. To be detailed
   - some ideas:
