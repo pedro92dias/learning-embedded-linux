@@ -20,6 +20,8 @@ _My goals are roughly:_
   - https://www.baeldung.com/linux/process-vs-thread#differences-between-process-and-thread : a bit about processes and threads
   - https://zah.uni-heidelberg.de/it-guide/ssh-tutorial-linux : SSH reference
   - https://refspecs.linuxfoundation.org/FHS_3.0/fhs-3.0.pdf : Linux file system
+  - https://www.denx.de/wiki/U-Boot: Uboot documentation
+  - https://www.trustedfirmware.org/projects/tf-a/: TF-A a reference implementation of secure world for v7A and v8A
 
 - Phase 2: Linux and hardware.
   - Here I thought of taking a more structured approach. There's so many courses online but I found that bootlin was consistentyl mentioned as one of the best, so I chose the Embedded Linux training by Bootlin.

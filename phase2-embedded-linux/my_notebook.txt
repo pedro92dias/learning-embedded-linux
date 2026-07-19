@@ -221,3 +221,228 @@
 -------------------------------------------------------------------------------
 4. Bootloaders and firmware
 -------------------------------------------------------------------------------
+
+  Bootloader is responsible for:
+    - hardware initialization
+    - loading an application binary (kernel) from flash, network or storage
+    - optionally decompression
+    - execute
+
+  Usually contain a shell or menu for user to select or diagnose stuff.
+
+  x86:
+    - BIOS, stored in flash, closed source
+    - Storage devices contain a first sector called MBR, master boot record
+      Contains a partition table and 446 bytes of bootloader code
+
+          BOOT PROCESS
+          +------+   +---------+   +---------+   +--------+
+          | BIOS |-->| STAGE 1 |-->| STAGE 2 |-->| KERNEL |
+          +------+   +---------+   +---------+   +--------+
+            ROM        Raw Disk      Raw Disk      Filesys
+          (init       (runs in      (runs in      (runs in
+            RAM)        RAM)          RAM)          RAM)
+
+          STORAGE LAYOUT (USB, SATA, SD, eMMC)
+          +-+----------+-------------------------+-------------------+
+          | | Stage 2  | Regular partition       | Regular partition |
+          | | ~100s KB |Linux FS, Kernel, root FS|                   |
+          +-+----------+-------------------------+-------------------+
+          |-'
+          v
+          +-------------+----------+
+          | Stage 1     | Part.    |
+          | (446 bytes) | Table    |
+          +-------------+----------+
+                Sector 0 (MBR)
+
+    - From 2006, UEFI started replacing BIOS, also stored in flash
+      Loads EFI binaries from the EFI system partition (e.g. a bootloader)
+        - the EFI system partition is a special partition
+        - formatted with FAT file system
+        - /efi/boot/bootx32.efi
+
+          BOOT PROCESS
+          +----------+   +------------+   +--------+
+          |   UEFI   |-->| Bootloader |-->| Kernel |
+          +----------+   +------------+   +--------+
+            (ROM/        (from EFI PT,    (from FS,
+            flash)        runs in RAM)     runs RAM)
+
+          STORAGE LAYOUT (USB, SATA, SD, eMMC, etc.)
+          +-----------+----------------------+--------------------------+
+          | Partition | EFI System Partition | Regular partition        |
+          | table     | (FAT filesystem)     | (Regular Linux FS)       |
+          |           | /efi/boot/*.efi      | Kernel + root FS         |
+          +-----------+----------------------+--------------------------+
+
+          - in my system, for example:
+            fdisk -l
+
+            Disk /dev/nvme0n1: 238.47 GiB, 256060514304 bytes, 500118192 sectors
+            Disk model: SKHynix_HFS256GD9TNI-L2B0B
+            Units: sectors of 1 * 512 = 512 bytes
+            Sector size (logical/physical): 512 bytes / 512 bytes
+            I/O size (minimum/optimal): 512 bytes / 512 bytes
+            Disklabel type: gpt
+            Disk identifier: C0C9EE38-96A7-471E-AD50-38DE098040C2
+
+            Device           Start       End   Sectors   Size Type
+            /dev/nvme0n1p1    2048   2203647   2201600     1G EFI System
+            /dev/nvme0n1p2 2203648 500115455 497911808 237.4G Linux filesystem
+
+    - ACPI is an open standard for OSs to discover and configure HW components,
+      manage power, status monitoring, etc.
+      Tables provided by the firmware for the OS to use
+      (Advanced Configuration and Power Interface)
+
+    - Some effort for adoption outside the x86 world. ARM working on this. RISCV
+      also shows some effort to use UEFI and ACPI.
+
+  Embedded:
+    - Most SoCs come with a small ROM containing code that cannot be changed
+    - Usually finds a bootloader in flash or from a USB or eMMC, loads it and
+      runs it
+      - usually in 2 stages:
+        1st stage: small, in internal SRAM, initializes external DRAM
+          step 1: ROM code loads the first stage from eMMC and executes in
+            internal SRAM
+          step 2: the first stage bootloader configures the DDR controller
+          step 3: the first stage bootloader loads the second stage into external
+            DDR and executes it
+        2nd stage: runs from external DRAM
+
+    - The datasheet can provide information on bootmodes, which pins need to be
+      high or low
+      - example on the BBB: chapter 26
+
+  Bootloaders:
+    - GRUB (grand unified bootloader)
+      - from GNU
+      - de-facto standard for most Linux distros in x86
+      - can read many filesystems
+      - provides menu and shell
+      - can load over network too
+    - Syslinux:
+      - for network or removable media
+      - a bit rustic, not very maintained
+    - systemd-boot:
+      - simple UEFI boot manager
+      - good alternative to GRUB for UEFI systems
+    - shim:
+      - minimal UEFI bootloader
+      - signed by Microsoft, used for secure boot
+      - can chainload another bootloader or the kernel directly
+    - U-boot:
+      - defacto standard for embedded systems
+      - supports ARM, ARM64, RISC-V, PPC, MIPS, etc.
+      - supports x86 with UEFI too
+      - https://www.denx.de/wiki/U-Boot
+
+  Trusted firmware:
+    - Usually the bootloader is discarded from RAM after booting
+    - But when running security mechanisms, some trusted firmware remains
+      - usually stored in DDR or some specific SRAM accessible by OS
+      - provides services to the OS, implemented by the secure firmware
+      - prevents the OS accessing critical HW resources
+    - in RISCV that trusted FW can be the OpenSBI
+    - in ARM that trusted FW can be the Secure Monitor in EL3
+
+    - in RISC-V:
+      3 privilige levels:
+        - M-mode: machine mode, like a secure mode
+        - S-mode: supervisor mode, at which linux kernel runs
+        - U-mode: user mode, at which linux user space apps run
+      SBI is the supervisor binary interface, a standardize interface between
+        OS and firmware
+        There is a reference open source implementation called OpenSBI:
+        https://github.com/riscv-software-src/opensbi
+
+
+                                        SBI calls
+                                     +------------------------+
+                                     v                        |
+          +------+  +----------+  +---------+  +------+  +----------+    +----------+
+          | ROM  |->|1st Stage |->| OpenSBI |->|U-Boot|->|  Linux   |<-->|Userspace |
+          | Code |  |Bootloader|  |         |  |      |  |  Kernel  |    |   Apps   |
+          +------+  +----------+  +---------+  +------+  +----------+    +----------+
+            M-mode     M-mode        M-mode      S-mode      S-mode          U-mode
+                                  (resident)              (resident)
+
+
+    - in ARM:
+      4 privilige levels:
+        - EL0: user space (untrusted)
+        - EL1: kernel space (trusted)
+        - EL2: hypervisor, virtualization
+        - EL3: highest privilige, runs secure firmware
+
+      2 worlds:
+        - normal, for a general purpose OS like Linux
+        - secure, for a separate, isolated OS and apps - TrustZone by ARM
+
+        EL3 exists only in secure
+        EL2 exists in normal and secure since ARMv8.4
+        EL1/0 exists in normal and secure
+
+        Non-secure                            Secure
+
+            +-------+-------+-------------+   +--------------------+
+        EL0 |AArch32|AArch64| AArch32 App |   |  Trusted Services  |
+            |  App  |  App  |             |   |                    |
+            +-------+-------+-------------+   +--------------------+
+        EL1 | AArch64 Kernel|AArch32 Kern.|   |     Trusted OS     |
+            +---------------+-------------+   +--------------------+
+        EL2 |         Hypervisor          |   | Trusted Part. Mgr* |
+            +-----------------------------+   +--------------------+
+        EL3 |             Firmware / Secure Monitor                |
+            +------------------------------------------------------+
+
+      The way to interface with the secure trusted firmware is via standardized
+      services, defined by ARM
+
+        +-------------+  Linux sys  +-------------+ PSCI, SCMI, +-------------+
+        |  Linux app  |    calls    |Linux kernel |    etc.     |  Secure FW  |
+        |    (EL0)    |------------>|    (EL1)    |------------>|    (EL3)    |
+        +-------------+             +-------------+             +-------------+
+
+
+      - PSCI (power state coordination interface) e.g. power management related
+        stuff like turning CPUs on and off, platform shutdown, generate resets
+          https://developer.arm.com/documentation/den0022/fb/?lang=en
+      - SCMI (system control and management interface) e.g. access to power domain,
+        clocks, sensor, performance...
+          https://developer.arm.com/documentation/den0056/latest
+      - TF-A is a reference implementation of secure world software for ARMv7A
+        and v8A. Includes a secure monitor that runs at EL3.
+        (formerly known as ATF)
+          https://www.trustedfirmware.org/projects/tf-a/ -> check the functions,
+          defines, etc. this needs porting for each hardware.
+      - TEE is the trusted execution environment, the secure world where a
+        trusted OS can run.
+        - isolated from linux
+        - allows to run trusted applications and services
+        - can provide services to Linux applications
+        - most famous open source implementaion: https://www.op-tee.org/
+
+          What executes when and at which level?
+
+          TIME ---->
+
+            SECURE  EL0 |                               (Trusted applications)
+            WORLD   EL1 |                           (Trusted Execution Environment BL32)
+          --------------+--------------------------------------------------
+                    EL3 | [ROM BL1] [1st stage BL2] [      Secure monitor BL31      ]
+          --------------+--------------------------------------------------
+                    EL2 |                           [2nd stage BL33]  (Hypervisor)
+            NORMAL  EL1 |                                             [Linux kernel]
+            WORLD   EL0 |                                                 [Linux applications]
+
+          Key:
+          [ ] = Mandatory component
+          ( ) = Optional component
+
+
+
+CONTINUE SLIDE 119
+
