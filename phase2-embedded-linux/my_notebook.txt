@@ -1,0 +1,223 @@
+-------------------------------------------------------------------------------
+1. Introduction
+-------------------------------------------------------------------------------
+
+  What is free software? When the license offers freedom to:
+  - run the software for any purpose
+  - study the software and change it
+  - redistribute copies
+  - redistribute modified copies
+
+  Why Linux for embedded?
+  - reuse components, focus on added value instead of basics
+  - low cost, no per-unit royalties, no costly dev tools
+  - full control, no vendor lock-in
+  - easy testing
+  - high-quality foundations
+  - security, all sources traceable for vulnerability analysis
+  - community support
+  - possibility to collaborate
+
+  Many architectures supported: x86, x86-64, ARM, RISC-V, PPC, MIPS, etc.
+  - no MMU supported but with limitations
+  - no 8 or 16 bit support
+  - other than toolchain, bootloader and kernel other components are architecture
+    independent
+
+  RAM: at least 8MB of RAM but usually at least 32MB.
+
+  Storage: usually more than 4MB, can be achieved with block storage (SD/MMC/
+    eMMC/USB/SATA) or raw flash (NAND, NOR)
+
+  Communication buses and systems:
+  - I2C, SPI, 1-wire, SDIO, PCI, USB, CAN
+  - Ethernet, Wifi, Bluetooth, etc...
+  - Extensive networking support, IPv4, IPv6, TCP, UDP, firewalling, etc.
+
+  Basic architecture:
+
+    Dev PC (host)               Embedded System (target)
+    +-----------------+   +------------------------------------+
+    |                 |   | Userspace                          |
+    |  +-----------+  |   |   [  Apps  ]    [  Apps  ]         |
+    |  | Tools     |  |   |   [  Libs  ]    [  Libs  ]         |
+    |  | compiler  |  |   |        [ C library ]               |
+    |  | debugger  |  |   +------------------------------------+
+    |  | ...       |  |   | Linux kernel                       |
+    |  +-----------+  |   |   [Task/Mem]    [ Drivers ]        |
+    |                 |   |   [Network ]    [ FileSys ]        |
+    |                 |   +------------------------------------+
+    |                 |   | - - - - - Bootloader - - - - - - - |
+    |                 |   +====================================+
+    |                 |   |              Hardware              |
+    +-----------------+   +------------------------------------+
+
+    - BSP contains a bootloader and kernel with suitable device drivers for a
+      target (Kernel Development course)
+    - Integrate bootloader, kernel, 3rd party libraries, applications, etc into
+      a system (this course)
+
+
+-------------------------------------------------------------------------------
+2. Embedded Linux environment
+-------------------------------------------------------------------------------
+
+  Open the labs doc and do the first task, download and setup the environment.
+
+
+-------------------------------------------------------------------------------
+3. Cross-compiling toolchains
+-------------------------------------------------------------------------------
+
+  The preinstalled tools available in a Linux workstation are usually native
+  toolchains - they compile binary code for the workstation arch (x86).
+
+  Cross-compiling makes sense because the host is powerful and the target is
+  very resource constrained:
+     Compile code in host ---> run binary in target
+
+  Build mechanisms on Linux often rely on a architecture tuple,
+    1: architecture name
+    2: vendor name (optional)
+    3: target OS or none, if not targeting an operating system
+    4: ABI/C library
+      e.g.:
+        - arm-linux-gnueabihf
+        - mips64el-linux-gnu
+        - arm-vendor-none-eabihf
+
+      Tuple can be used as prefix to differentiate from native toolchain:
+        - gcc                     --> native compiler
+        - arm-linux-gnueabihf-gcc --> cross compiler
+
+  A GCC toolchain contains:
+
+              +---------------------------------------------+
+              |                                             |
+              |  +-----------------+   +-----------------+  |
+              |  |    Binutils     |   | Kernel headers  |  |
+              |  +-----------------+   +-----------------+  |
+              |                                             |
+              |  +-----------------+   +-----------------+  |
+              |  | C/C++ libraries |   | C/C++ compiler  |  |
+              |  +-----------------+   +-----------------+  |
+              |                                             |
+              |  +-----------------+                        |
+              |  |  GDB debugger   |                        |
+              |  |   (optional)    |                        |
+              |  +-----------------+                        |
+              |                                             |
+              |                 Cross-compilation toolchain |
+              +---------------------------------------------+
+
+    - binutils: set of tools to generate and manipulate binaries, for example:
+      - ld linker
+      - as assembler
+      - ar archiver
+      - objdump, readelf, size, nm, strings to inspect binaries
+      - objcopy to modify binaries
+      - strip to remove parts of binaries only needed for debugging
+
+    - kernel headers:
+      - the C library and applications need need to interact with the kernel:
+        system calls, constants, data structures, etc.
+      - compiling the C standard library or applications requires kernel headers
+      - available in
+        - linux/
+        - asm/
+        - arch/<arch>/include/uapi
+        - include/uapi
+      - extracted from the kernel sources using a Makefile target "headers_install"
+      - usually backwards compatible, to not break old programs when the kernel is
+        updated - updating a kernel shouldn't break existing programs
+
+                        +-----------------------------+
+                        |         Application         |
+                        +-----------------------------+
+                             |                  |
+                             v                  |
+                        +---------+             |
+                        |C library|             |
+                        +---------+             |
+                             |                  |
+                        -----|------------------|------
+                             v                  v
+                          +------------------------+
+                          |     Kernel headers     |
+                        +-+------------------------+-+
+                        |           Kernel           |
+                        +----------------------------+
+
+    - C/C++ libraries:
+      - essential component of the system:
+        - sits and interfaces between applications and kernel
+        - provides well known standard C API to ease development
+      - examples: glibc, musl, uClibc...
+        - https://www.gnu.org/software/libc/
+        - different advantages, e.g. licensing or size
+      - the cross-compiling toolchain is compiled against a specific C std lib
+
+    - C/C++ compiler:
+      - GCC, GNU compiler collection
+      - Famous free compiler, can do many languages and many architectures
+
+    - GDB debugger (maybe)
+
+  A Linux toolchain
+    - includes a Linux-ready C standard library, that knows how to perform
+     system services via system calls.
+    - can be used to build Linux applications or bare-metal code (super set)
+    - the tuple includes "linux", e.g. arm-none-linux-gnueabihf
+
+  A bare-metal toolchain:
+    - does not include a C standard library (or only a minimal one)
+    - can only build bare-metal code (subset)
+    - the tuple includes "none", e.g. arm-none-none-eabi
+
+  When building a toolchain, the ABI must be understood:
+    - application binary interface, contains e.g. calling conventions and
+      organization of structs
+    - e.g on ARM EABI, EABIhf, on RISC-V ilp32, ilp32f, etc.
+
+  Building a toolchain is difficult. The typical process is:
+    - build dependencies of binutils/gcc
+    - build binutils
+    - build a baremetal, first stage GCC
+    - extract kernel headers from the Linux source code
+    - build the C library using the first stage GCC
+    - build the second state and final GCC supporting linux and C library
+    Reference: https://crosstool-ng.github.io/docs/toolchain-construction/
+
+  You can download pre-built toolchains but that's less flexible
+
+  You can also use utilities that automate the process, e.g using scripts,
+    Makefiles, etc.
+    - examples: Crosstool-ng, OpenEmbedded / Yocto Project
+
+  Once built, the toolchain will contain:
+    - bin/, the cross compilation tool binaries
+    - <arch-tuple>/sysroot:
+      - <arch-tuple>/sysroot/lib : C lib, GCC runtime, C++ std lib for the target
+      - <arch-tuple>/sysroot/usr/include: C lib headers, kernel headers
+
+  ************************** Lab **************************
+   1. downloaded the sources
+   2. build the ct-ng executable locally
+   3. looked at the samples
+   4. configure a toolchain
+      4.1 we want Cortex-A8, for the Beagle, so load sample
+          "arm-cortex_a8-linux-gnueabi"
+      4.2 select a bunch of nice options
+   5. build the cross-compiling toolchain
+   6. test it by compiling something
+   7. explore a bit
+      7.1 also scp'ed the file onto the BBB:
+          "scp hello.o debian@192.168.7.2:~"
+          didn't work though lol
+          "file hello" shows that we're missing loader ld-musl-armhf-so.1
+          copy that in, move it to /lib, where it can live with other shared libs
+          now execute ./hello, it works!
+
+-------------------------------------------------------------------------------
+4. Bootloaders and firmware
+-------------------------------------------------------------------------------

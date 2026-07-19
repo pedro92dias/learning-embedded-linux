@@ -1,0 +1,460 @@
+# Command cheat-sheet
+
+https://bootlin.com/doc/legacy/command-line/command_memento.pdf
+https://linuxcommand.org/lc3_man_page_index.php#other
+
+## Basics
+
+- pwd: print current dir
+- cd: come on...
+  - ~ is the home directory
+  - - is the previous directory
+- clear: clear terminal
+- ls: list
+  - -a all, including hidden (starting with .)
+  - -s size
+  - -h human-readable size
+  - -l list in long format:
+    see permissions below
+
+- find <path> -name <pattern> : find a file
+    - example: . -name "*.pdf" finds a file in current dir matching a pattern
+
+
+- file <file>: tells information about a file
+- type <cmd>: gives info on a command, where to find it for example
+- which <executable>: exact location of an executable
+
+- grep: search
+    - grep [options] pattern [file]
+    - examples:
+      grep 'someregexpattern' ./*
+      grep -E '^\#\#' cheat-sheet.md
+
+- echo (see below)
+- env or printenv : prints all environment variables (e.g. $USER)
+- export <var>="something" : sets an environment variable (use echo $var to print)
+  - example, add a directory to the PATH:
+    export PATH=$PATH:$(pwd)  --> see command substitution below
+
+  - some important environment variables:
+    LD_LIBRARY_PATH : shared library search path
+    DISPLAY
+    EDITOR : the default
+    HOME : current home directory
+    HOSTNAME : name of the machine
+    PATH : command search path
+    SHELL : current shell name
+    TERM : current terminal type
+    USER : current user name
+
+- alias : sets up an alternative name for a long command
+  Example: alias l='ls -shal'
+- history : shows last commands
+  !! shows the last one
+  !10 shows by number
+  !cat shows the latest matching the start string cat
+
+- sudo : super-user
+- id : current user
+
+
+## Finding help
+
+- help <built-in>: reference page for shell builtins (like cd)
+- <command> --help: many programs offer a help page
+- man <command>\: many programs offer a manual page (uses less to display)
+- a lot of documentation can be found in /usr/share/doc
+
+
+## Displaying file content:
+
+- less
+  - page up / b: back
+  - page down / space: forward
+  - G: end of file
+  - 1G: beginning of file
+  - h: help
+  - q: quit
+
+- vim
+  - Different modes:
+    - Esc enters normal mode, for navigation and editing
+    - i enters insert mode, for inserting and modifying text
+    - Esc + \: enters the command line mode
+
+  - Basic commands:
+    - vim <file> opens a file or modifies it
+    - :q! quits without saving
+    - :wq! saves the modifications and quits
+    - /key_word searches for key_word, n jumps to the next match
+    - v selects text
+    - d cuts the text
+    - y copies the text
+    - p pastes the text
+
+- cat
+  - concatenate
+
+- tail / head:
+  - -n : displays first or last n lines of a file
+  - -f : follows the end of the file when using tail, useful to watch logs
+
+
+## GIT:
+
+Passwords are no longer accepted. Setup an SSH key:
+https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54l1
+
+- add <file> : stage changes for commit
+- commit -m "<message>" : commit to the repository
+- push : update remote repository from your local
+- pull : fetch from repository or branch
+
+## Symbolic links:
+
+- ln -s file_name link_name
+  - create symbolic link
+- ln -s ../README.txt
+  - creates a link here to a file in another directory, same name
+- ln -s file1 file2 fil3 dir
+  - multiple links
+- rm : only removes the link, not the file
+- ls -l displays the link
+
+## Permissions
+
+- Reference: https://linuxcommand.org/lc3_lts0090.php
+- ls -l to show permissions
+    permissions, owner, group, size, mod time, name
+    - note on permissions:
+      - - is a normal file, d is directory, l is a link
+      - rwx for owner/group/everybody else
+      - t is a sticky bit, e.g. /tmp has drwxrwxrwt so that each user can delete
+      only their own
+      See here: https://linuxcommand.org/images/file_permissions.png
+
+      Type  Owner  Group  World
+        |      |      |      |
+        v      v      v      v
+        -     rw-    r--    r--
+
+      (r=read, w=write, x=execute, -=none)
+
+- chmod <permission> <file>
+    rwx rwx rwx = 111 111 111
+    rw- rw- rw- = 110 110 110
+    rwx --- --- = 111 000 000
+
+    rwx = 111 in binary = 7
+    rw- = 110 in binary = 6
+    r-x = 101 in binary = 5
+    r-- = 100 in binary = 4
+
+    Example:
+    chmod 600 file1: read write permission to owner, no one else can touch it
+    Common codes:
+    777 - free for all
+    755 - only owner may write, anyone can read execute
+    700 - owner has full rights, no one else can do anything
+    666 - all users may read and write the file
+    644 - owner may ready and write, others may only read
+    600 - only owner may write, others can't do anything
+
+  - R recursive
+  - u = user, g = group, o = other, a = all
+  - \+ = add, - = remove
+  - example: chmod u-w removes write access for user, chmod a-x adds execute
+    access for all
+
+- chown <user> <file> : change the owner (must be called as superuser)
+  example:
+  - chown -R pedro /home/linux/src
+    now pedro is the owner of all files in the directory
+
+- chgrp <group> <file> : change the group ownership (must be owner of file or dir)
+  example:
+  - chgrp -R empire /home/
+    now everything under home belongs to the group empire
+
+
+## Manipulating files
+
+- Wildcards (https://linuxcommand.org/lc3_lts0050.php):
+  - \* match any character
+  - ? match a single character
+  - [chars] match any character in the set
+  - examples:
+    - g* match all filenames beginning with g
+    - Data??? match all filenames beginning with Data and 3 characters
+    - [[:upper]]* match only uppercase files
+    - *.[![:lower:]] match any file that does not have extension in lower case
+
+- cp: copy
+  - cp file1 file2
+  - cp file1 dir1 (creates file1 inside dir1)
+  - cp -i (interactive, asks before overwritting)
+- mv: move or rename
+- rm: remove
+  - rm file1 file2 file3
+  - -r dir1 recursive remove inside the directory
+  - -i interactive
+  - useful trick: construct the command but using ls first. Make sure it won't
+    remove anything you don't want removed.
+- mkdir
+- rmdir : same as rm -r but only works on empty dirs
+- sort : sorts lines in a file
+  - -r : in reverse order
+  - -u : unique
+- awk : text processing command, ideal for columns
+- sed : stream editor
+  - mostly used to replace text, e.g. sed -e 's/abc/def/ file replaces abc for
+    def in file
+  - uses regexes:
+    good ol' https://rubular.com/
+  -
+
+## Some bash script stuff
+
+- Online reference: https://linuxcommand.org/lc3_writing_shell_scripts.php
+- Refer to examples in this folder...
+
+- echo: a shell built in that prints its arguments
+  - if the argument expends into something, echo will show us that.
+  - see the expansion chapter below
+  - example:
+    - echo c : c
+    - echo c* : cheat-sheet.md
+    - echo ~ : /home/pedro
+    - echo -e : escapes characters, e.g. echo -e "one\ntwo\three"
+    - echo $(($((5**2)) * 3)) : 75
+    - echo Front-{A,B,C}-Back: Front-A-Back ... Front-C-Back
+    - echo Front-{0..5}-Back: Front-0-Back ... Front-5-Back
+    - echo a{A{1,2},B{3,4}}b : aA1b aA2b aB3b aB4b
+  - the above can be very useful for creating files or directories:
+    - create a file with all the possible license plates in Portugal:
+      echo {A..Z}{A..Z}-{0..9}{0..9}-{A..Z}{A..Z} > all_plates.txt
+    - create a file with all letters in each line:
+      echo {A..Z} | tr ' ' '\n' > all_letters.txt
+- shift: shell builtin to shift all positional parameters one position down
+- "$$" current PID
+- "$?" allows us to get the last exit status
+  - 0 OK
+  - > 0 NOT OK
+  - careful when using if - the 0 is true: if cd "$some_directory"; then OK else NOK
+- exit x: exits with code n
+- $LINENO returns the current line number
+- trap: trap signals and events
+  - l: shows a list of all traps
+  - defines commands to be executed when a signal is received
+    example: trap 'echo "oopsi... SIGINT received"; exit 1;" SIGINT
+             trap clean_up_func SIGINT SIGTERM SIGHUP
+  - see section Job Control below
+
+
+## Redirection
+
+- > redirect standard output to create existing or new file
+
+- >> redirect standard output to append existing file
+
+  - the descriptor for the standard output is 1
+  - standard error can be directed via 2> or 2>>
+  - the descriptor for both is &, e.g. &> or &>>
+
+
+- < tells command to take arguments from standard input
+
+- \| pipelines direct the standard output of one command to the standard input
+    of another. Example:
+     ll /s* | less : search all files or directors in / starting with s and display the output with less
+     cat unsorted_list_with_dupes.txt | sort | uniq | pr | lpr
+
+- Special form: a here-script or here-doc
+  cat << SomeMarker
+   ..
+    ...
+  SomeMarker
+
+- tee sends to a file + to the display
+  e.g. ls | tee results.txt shows the command standard output + writes it to a file
+
+
+
+## Expansion
+
+  - pathname expansion: see the echo examples
+  - tilde expansion: ~ is home
+  - arithmetic expansion: see the echo instructions above
+  - parameter expansion: printenv and export, e.g.
+    - export HANDSOME="pedro"
+    - echo $HANDSOME
+  - command substitution: similar to pathname expansion, e.g.
+    - ls -sh $(which ruby)
+    - file $(ls /usr/bin/* | grep bin/zip)
+    - echo "I'm using linux $(uname -r)"
+  - double quotes: supress word-splitting, pathname, tilde, and brace expansion
+    (keep parameter, arithmetic and command expansions)
+  - single quotes: supress ALL expansions
+
+
+## Job control
+
+- ps : list processes
+  - ps -ux : all processes belonging to current user
+  - ps -aux : all processes running in the system
+  - ps -eLf : shows lightweight processes (threads)
+
+  Info:
+    PID: Process id
+    LWP: Thread id (lightweight process)
+    NLWP: Number of threads
+    VSZ: Virtual process size (code + data + stack)
+    RSS: Process resident size: number of KB currently in RAM
+    TTY: Terminal
+    STAT: Status: R (Runnable), S (Sleep), W (paging), Z (Zombie)..
+
+- strace can help to observe the process creation flow
+    example with ls: strace -f -etrace=execve,clone bash -c '{ ls; }'
+      - 1st clone: we create a process as a clone of the bash
+      - 2nd execve: replaces the current executable in the process with the ls binary
+
+- pstree helps to visualize the process hierarchy, up to systemd (PID 1)
+  - add -p for PIDs, ex: pstree -p | head -n10
+
+- top : lists most intensive processes, by CPU
+
+- jobs : lists own processes, ran by the user (simpler)
+
+- <program> + ctrl-z : start a program and suspend
+- bg : place a job in background execution
+- fg <job_number>: places the last or nth job in foreground execution
+
+- <program> & : start a program and send to background
+  - ctrl+z
+
+- kill -<signal> <process_number> or %<job_number>: kill a process (PID) or the nth job
+  example: kill %1 or kill 1234
+  example: kill all own processes kill -9 -1, -9 is the signal to kill, -1 is all
+
+  - Some OS signals:
+    - SIGHUP : hang-up, sent when terminal is closed, the program listens
+    - SIGINT : interrupt the process (ctrl-c), the program listens
+    - SIGTERM : termination, the default signal sent by kill, the program listens
+    - SIGKILL : kill, immediate termination by the kernel (program doesn't listen to this)
+
+- time <command> : shows time elapsed to complete a task
+    real = user + sys + waiting time
+    - real: actual elapsed time
+    - user: CPU time running program code
+    - sys: CPU time running system calls
+
+
+## Compressing or archiving files
+
+- du <file, directory>: display size,
+  - -h for human readable
+  - -s sum
+
+- df : display size usage of mounted filesystems
+  - -h for human readable
+
+- g[un]zip : compresses a file
+  - can also use b[un]zip2
+  - can also use [un]lzma
+
+- TAR (tape archive record)
+  - tar -xvzf files.tar.gz - C my_files:
+    - c: create
+    - x: extract (opposite of collect)
+    - v: verbose output
+    - z: decompress using gzip
+    - f: file immediately after
+    - t: test
+    - -C: directory with a name of choice
+
+- md5sum : computes a MD5 128 bit checksum of a given file
+  example md5sum my_file.iso > MD5SUM
+  -c : checks, for example md5sum -c MD5SUM
+
+## SSH and SCP
+
+- ip addr show : shows IPs
+  - IPs are showed next to "inet" for each interface
+- ifconfig : set a static IP for an interface
+  - for example ifconfig eth0 192.168.1.10 up
+  - then the host PC ethernet adapter can be configured to the same subnet at 192.168.1.1
+
+- SSH provides a secure, encrypted command-line interface to remote target
+  - the target must contain SSH server daemon (sshd)
+  - ssh <username>@<ip_address> connects
+    - example: ssh root@192.168.1.10
+
+- SCP uses the SSH protocol to copy files
+  - scp <source> <username>@<ip_address>:<dest>
+    - example: scp root@192.168.1.10:/var/log/messages ./
+  - -r for recursive copying (folders):
+    - scp -r my_config_folder/ root@192.168.1.10:/etc/
+
+- SSH keys can be setup to avoid always typing the password
+  - ssh-keygen : generates a key pair
+  - ssh-copy-id <username>@<ip_address> : copies the public key
+
+- rsync can be used to sync directories in 2 machines:
+  - rsync <options> <source> <destination>
+  - -P or --partial: keep partially transferred files
+  - -a : archive mode, preserve everything: rsync -a /home/arvin/sd6_agents/ /home/sydney/misc/
+  - --progress : show progress
+  - --delete : delete also
+  - copying to a remote machine:
+    rsync -Pav /home/bill/legal/arguments/ bill@www.sco.com:/home/legal/arguments/
+  - copying using ssh:
+    rsync -Pav -e ssh homer@tank.duff.com:/prod/beer/ fridge/homer/beer/
+
+https://zah.uni-heidelberg.de/it-guide/ssh-tutorial-linux
+
+
+## Makefile
+
+See examples
+- General rule:
+  targets : prerequisites
+    command
+    @command
+
+  - rule only runs if target doesn't exist
+  - command lines must start with a tab
+  - @ silences a command
+  - make without arguments runs the first rule
+    - the first rule can be all:
+
+  - $@ is an automatic variable for the target name
+  - $? is an automatic variable for all prerequisites newer than the target
+  - $^ is an automatic variable for all prerequisites
+  - $< is an automatic variabel for the first prerequisite
+  - * is a wildcard, can be used like $(wilcard *.c)
+
+## GDB
+
+- text based debugger
+- ddd is a graphical gdb, might be worth looking
+- some commands:
+  - run : start running
+  - b : break, e.g. b func
+  - p : print, e.g. p arg1
+  - c : continue until next breakpoint
+  - n : step over
+  - s : step into
+  - bt: backtrace shows function call stack
+  - quit : exit
+
+
+## Utilities
+
+  Picocom, serial communication tool:
+    - Exit with ctrl+a followed by ctrl+x
+    - Example: picocom -b 115200 /dev/ttyUSB0
+
+  qemu-arm, instruction set emulator:
+    - -L tells where to find shared libraries
+
