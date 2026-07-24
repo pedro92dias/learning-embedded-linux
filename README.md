@@ -42,8 +42,9 @@ _My goals are roughly:_
     - Course: https://bootlin.com/training/embedded-linux/
     - Slides: https://bootlin.com/doc/training/embedded-linux/embedded-linux-slides.pdf
     - How toolchains are built: https://crosstool-ng.github.io/docs/toolchain-construction/
-    - Crosscore-ng: https://github.com/crosstool-ng/crosstool-ng
-    -
+    - Crosstool-ng: https://github.com/crosstool-ng/crosstool-ng
+    - Uboot sources: https://elixir.bootlin.com/u-boot/v2026.07/source/
+    - Uboot FIT image: https://www.thegoodpenguin.co.uk/blog/u-boot-fit-image-overview/
 
 --------------------------------------------------------------------------------
 

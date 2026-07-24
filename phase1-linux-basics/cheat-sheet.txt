@@ -449,6 +449,98 @@ See examples
   - quit : exit
 
 
+## U-Boot shell commands:
+
+    - help
+    - version
+    - bdinfo
+
+    NAND flash:
+    - nand info
+    - nand read <addr> <off|partition> <size>
+    - nand erase [<off> [<size>]]
+    - nand write <addr> <off|partition> <size>
+    - help nand
+
+    MMC:
+    - mmc info
+    - mmc read <addr> <blk#> <cnt>
+    - mmc write <addr> <blk#> <cnt>
+    - mmc part to show partition table
+    - mmc dev to show/set current MMC device
+    - help mmc
+
+    USB:
+    - usb info
+    - usb read <addr> <blk#> <cnt>
+    - usb write <addr> <blk#> <cnt>
+    - usb part
+    - usb dev
+    - help usb
+
+    Commands to manipulate the environment:
+    - printenv print all variables
+    - setenv <var_name> <var_value> change var in only in RAM
+    - editenv <var_name> interactively edit value of variable in RAM
+    - saveenv to save the environment to storage
+    - env default, env info, env erase, env set, env save, etc...
+    e.g.:
+      => printenv
+        baudrate=19200
+        ethaddr=00:40:95:36:35:33
+        netmask=255.255.255.0
+        ipaddr=10.0.0.11
+        serverip=10.0.0.1
+        stdin=serial
+        stdout=serial
+        stderr=serial
+      => setenv serverip 10.0.0.100
+      => printenv serverip
+        serverip=10.0.0.100
+      => saveenv
+
+    Commands to examine the memory, manipulate registers, etc.:
+    - mw [.b, .w, .l, .q] address [# of objects] : memory display
+    - mw [.b, .w, .l, .q] address value [count] : memory write
+    - mm [.b, .w, .l, .q] address : interactive memory modify from address
+    - md address : dumps memory
+
+    Commands for storage and filesystems:
+    - FAT: fatinfo, fatls, fatsize, fatload, fatwrite
+    - ext2/3/4: ext2ls, ext4ls, ext2load, ext4load, ext4size, ext4write
+    - Squashfs: sqfsls, sqfsload
+    - load <interface> [<dev[:part]> [<addr> [<filename> [bytes [pos]]]]]
+      example: load mmc 0:4 c0000000 /etc/fstab
+    - ls <interface> [<dev[:part]> [directory]]
+      example: ls mmc 0:4
+    - size <interface> <dev[:part]> <filename>
+
+    Commands for networking:
+    - ethaddr: MAC address
+    - ipaddress: IP address
+    - ping: ping a destination machine (uboot cannot receive pings)
+    - tftp <address> <filename>: load a file using TFTP protocol (trivial file transfer protocol)
+        u-boot integrates a TFTP client (remember to configure ipaddr, serverip, ethaddr)
+        you can install a server in the host via sudo apt install tftpd-hpa
+        which then makes files in /srv/tftp available via TFTP to the board
+    - dhcp: get an IP address using dhcp
+
+    Commands to boot:
+    - bootz: boot compressed ARM32 zimage
+    - booti: boot uncompressed ARM64 or RISCV image
+    - bootm: boot kernel image with legacy headers
+    - zboot: boom compressed x86 bzImage
+
+    - bootcmd : lists what will be executed automatically after the count down
+    - bootargs : linux kernel command line
+      example to read what is in mmc, load kernel image and device tree, set cmd line and boot:
+        ls mmc 0:4 /boot
+        load mmc 0:4 c2000000 /boot/zImage
+        load mmc 0:4 c4000000 /boot/stm32mp157c-dk2.dtb
+        setenv bootargs root=/dev/mmcblk0p4 rootwait
+        bootz c2000000 - c4000000
+
+
 ## Utilities
 
   Picocom, serial communication tool:
@@ -457,4 +549,3 @@ See examples
 
   qemu-arm, instruction set emulator:
     - -L tells where to find shared libraries
-

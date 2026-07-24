@@ -443,6 +443,104 @@
           ( ) = Optional component
 
 
+  Some examples of boot sequences in ARM
 
-CONTINUE SLIDE 119
+    BBB, ARMv7, Cortex A8:
+      1. ROM code is executed
+      2. U-Boot SPL is loaded from a file called MLO in FAT filesystem in the
+        first bootable partition, executes from SRAM
+      3. U-Boot is loaded from a file called u-boot.img in a FAT filesystem,
+        executes from DRAM
+      4. Linux kernel
 
+      Note: SPL = secondary program loader, a small, lightweight initial-stage binary
+        see below
+
+  U-Boot
+
+    - Source here: https://elixir.bootlin.com/u-boot/v2026.07/source/
+
+    - Configurable based on kconfig from the Linux kernel
+      - Configuration files for platforms can be found here
+        https://elixir.bootlin.com/u-boot/v2026.07/source/configs
+          - define CPU, drivers needed, features switched on, etc.
+      - Note: migration to kconfig ongoing - some configuration files still in
+        include/configs headers and defconfig files
+        Example stm32mp15_trusted_defconfig:
+          CONFIG_ARM=y
+          CONFIG_ARCH_STM32MP=y
+          CONFIG_TFABOOT=y
+          CONFIG_SYS_MALLOC_F_LEN=0x3000
+
+      - Similarly to Crosstool-ng, we have to configure and then build (compile)
+        - load a pre-defined configuration with make NAME_defconfig
+        - run make menuconfig to further customize the Uboot
+
+      - We need to specify the path to the cross-compiler at some point
+        - env var CROSS_COMPILE contains the prefix common to all cross-compilation
+          tools, example:
+            $ export PATH=$PATH:/my/path/to/toolchain/bin
+            $ make CROSS_COMPILE=arm-linux-   [adding the path keeps CROSS_COMPILE short]
+
+      - Result is a u-boot.bin file, the U-boot image. It can have other formats
+        for other boot media like NAND or eMMC
+
+      - SPL is a very stripped down version of U-boot, no shell, no commands
+        - small enough to meet the constraints of first-stage bootloader (should
+          fit in SRAM)
+        - also configured via menuconfig
+
+    - Device trees are structures that describe the topology of the hardware
+      - software ---  gets to know --> hardware
+      - mainly used by Linux but now also by U-boot
+      - .dts files exist for each board (create one for a new board)
+      - defconfigs usually specify a default device tree, can be override with
+        DEVICE_TREE variable
+
+      example BBB:
+        - there is one defconfig file for TI AM335x platforms
+            config/am335x_evm_defconfig
+        - contains a default device tree for the TI EVM
+            arch/arm/dts/am335x-evm.dts
+        - but there is a device tree file describing the BBB:
+            arch/arm/dts/am335x-boneblack-wireless.dts
+
+        - so now we configure and build
+           $ export PATH=/path/to/toochain/bin
+           $ make am335x_evn_defconfig
+           $ make DEVICE_TREE=am335x-boneblack-wireless CROSS_COMPILE=arm-linux-
+
+        - now we set out device tree and our cross-toolchain
+        - it will produce:
+          1. first stage SPL called MLO (mmc load) required by TI platforms
+          2. u-boot.img, full U-boot, second stage bootloader
+
+    - Most U-boot configuration happens at compile time in menuconfig
+      - it's also possible to have runtime configuration via environment variables
+        located in RAM
+      - the environment can be in a fixed offset in NAND or MMC/USB, in a file on
+        FAT or EXT4, or none at all...
+
+    - How to manipulate the environment, read, write, debug and boot:
+        see cheat sheet for important commands!
+
+    - U-Boot offers the concept of FIT image, multiple things into one image
+      https://www.thegoodpenguin.co.uk/blog/u-boot-fit-image-overview/
+      - contains multiple kernel images
+      - contains multiple device trees
+      - contains multiple initramfs
+      - ensures binaries don't overlap in memory
+      - useful for secure booting too
+      - u-boot knows how to find different things inside
+
+    - A "generic distro boot" can be used - it asks for a few variables and then
+      boots
+      https://u-boot.readthedocs.io/en/latest/develop/distro.html
+      - kernel_addr_r : address in RAM to load the kernel image
+      - ramdisk_addr_r : address in RAM to load the initramfs image
+      - fdt_addr_r : address in RAM to load the flattened device tree
+      - pxefile_addr_r : address in RAM to load the configuration file (below)
+      - bootfile : path configuration file e.g /boot/extlinux/extlinux.conf
+
+
+CONTINUE SLIDE 157
