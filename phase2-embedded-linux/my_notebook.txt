@@ -543,4 +543,65 @@
       - bootfile : path configuration file e.g /boot/extlinux/extlinux.conf
 
 
-CONTINUE SLIDE 157
+  TF-A: ARM trusted firmware
+
+    - FIP = firmware in package, a concept specific to TF-A
+    - Similar to FIT, a format to pack several images into a binary
+    - Used to bundle BL33 (see above)
+
+    - TF-A is not configured using kconfig
+      - entirely based on variables passed on the make cmd line
+      - Documented here: https://trustedfirmware-a.readthedocs.io/en/latest/getting_started/build-options.html
+        for example:
+        - CROSS_COMPILE : prefix for cross-compiler
+        - ARCH : CPU architecture, e.g. aarch32 or aarch64
+        - ARM_ARCH_MAJOR, 7 for ARMv7, 8 for ARM v8...
+        - DTB_FILE_NAME : path to device tree that describes the board
+        - BL33 : path to second stage bootloader, usually U-boot
+
+    - The result of the build are, amongst others:
+      - TF-A itself, e.g. tfa-a-stm32mp157a-dk2.stm32
+      - the FIP image, containing UBoot, e.g. fip.bin
+
+  ************************** Lab **************************
+
+    u-boot README has some interesting stuff:
+
+      Typical execution flow:
+
+      1. arch/arm/cpu/armv7/start.S , starts CPU-specific stuff
+
+      2. lowlevel_init() ,  setup bare minimum to allow next function,
+          no stack, no global data or BSS, almost never needed
+
+      3. board_init_f() , set up SDRAM, serial UART, global_data is available
+          stack is in SRAM, no BSS yet (so no global or static variables, only
+          stack variables and global_data)
+
+      4. board_init_r() , main execution, common code, BSS now available,
+          all static/global variables can be used, continue to main_loop()
+
+      It shows all kinds of variables that one can setup...
+
+    We "configure" UBoot using Kconfig... nothing to change...
+    We compile UBoot...
+
+    TI ROM code will look for an MLO (MMC Load) file in a FAT partition
+    Prepare an SD card with it...
+      - we created a boot partition
+      - then we created a FAT32 filesystem in it
+      - then we transfered MLO and u-boot.img to it
+
+    Now we reset the board...
+      we get:
+        U-Boot SPL 2024.04 (Aug 01 2026 - 17:27:34 +0200)
+        Trying to boot from MMC1
+
+        U-Boot 2024.04 (Aug 01 2026 - 17:27:34 +0200)
+
+    Now we try to enable the "config" command and rebuild Uboot. This should
+    give us a dump of all configuration settings.
+
+      md 0x9df33858 shows some stuff!
+
+      CONTINUE THE LAB

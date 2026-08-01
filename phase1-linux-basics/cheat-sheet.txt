@@ -20,6 +20,7 @@ https://linuxcommand.org/lc3_man_page_index.php#other
 - find <path> -name <pattern> : find a file
     - example: . -name "*.pdf" finds a file in current dir matching a pattern
 
+- sudo dmesg -w : shows device driver messages
 
 - file <file>: tells information about a file
 - type <cmd>: gives info on a command, where to find it for example
@@ -414,6 +415,22 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 https://zah.uni-heidelberg.de/it-guide/ssh-tutorial-linux
 
 
+## Getting around an SD Card
+
+- ls -l /dev/mmc*
+  or
+  lsblk
+  should show the card
+
+- sudo dmesg -w and then plug/unplug should also show device driver messages
+
+- umount /dev/mmcblk0p* : umount any SD partitions
+- sudo dd if=/dev/zero of=/dev/mmcblk0 bs=1M count=16 : erases the first 16MB (partition table)
+- sudo cfdisk /dev/mmcblk0 : create partitions
+  - remove and reenter card, to reload partitions
+- sudo mkfs.vfat -a -F 32 -n boot /dev/mmcblk0p1 : creates a FAT32 filesystem in the partition
+- now the partition should be mounted on /media/$USER/boot
+
 ## Makefile
 
 See examples
@@ -500,7 +517,7 @@ See examples
       => saveenv
 
     Commands to examine the memory, manipulate registers, etc.:
-    - mw [.b, .w, .l, .q] address [# of objects] : memory display
+    - md [.b, .w, .l, .q] address [# of objects] : memory display
     - mw [.b, .w, .l, .q] address value [count] : memory write
     - mm [.b, .w, .l, .q] address : interactive memory modify from address
     - md address : dumps memory
@@ -546,6 +563,10 @@ See examples
   Picocom, serial communication tool:
     - Exit with ctrl+a followed by ctrl+x
     - Example: picocom -b 115200 /dev/ttyUSB0
+
+    - check port via ls -l /dev/tty*
+    - add user to group dialout via sudo adduser $USER dialout
+      (requires reset)
 
   qemu-arm, instruction set emulator:
     - -L tells where to find shared libraries
