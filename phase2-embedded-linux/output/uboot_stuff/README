@@ -1,0 +1,15 @@
+This contains a .config file that we have configured for the BBB board using menu config and a few custom options, e.g. including the command "config" and setting the uboot shell timeout to 10 seconds.
+
+The other files are output from make:
+ - an MLO, the MMC load file that contains the U-boot SPL and executes from SRAM
+ - and u-boot.img, the bootloader main-stage that is loaded into and executed from DRAM
+ 
+ To remind us:
+
++----------+    +------------+    +--------------+    +------------+
+| ROM code |--->| U-Boot SPL |--->|    U-Boot    |--->|Linux kernel|
++----------+    +------------+    +--------------+    +------------+
+ Stored in       File 'MLO' in     File 'u-boot.img'                  
+    ROM          FAT 1st boot      in FAT filesys.                    
+                 partition.                                           
+                 Runs in SRAM      Runs in DRAM

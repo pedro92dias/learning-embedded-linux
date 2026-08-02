@@ -23,6 +23,8 @@ https://linuxcommand.org/lc3_man_page_index.php#other
 - sudo dmesg -w : shows device driver messages
 
 - file <file>: tells information about a file
+- hexdump <file> -C : does an hexdump with ASCII
+    e.g. hexdump /media/pedro/boot/uboot.env shows all the environemnt variables
 - type <cmd>: gives info on a command, where to find it for example
 - which <executable>: exact location of an executable
 
@@ -567,6 +569,11 @@ See examples
     - check port via ls -l /dev/tty*
     - add user to group dialout via sudo adduser $USER dialout
       (requires reset)
+
+  tio, also a serial comms tool:
+    - tio -b 115200 /dev/ttyUSB0
+    - ctrl+T  +  q for quiting
+    -         +  h for help
 
   qemu-arm, instruction set emulator:
     - -L tells where to find shared libraries

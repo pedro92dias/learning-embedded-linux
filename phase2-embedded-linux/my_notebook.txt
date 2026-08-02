@@ -592,6 +592,15 @@
       - then we created a FAT32 filesystem in it
       - then we transfered MLO and u-boot.img to it
 
+      Remember from above:
+        BBB, ARMv7, Cortex A8:
+        1. ROM code is executed
+        2. U-Boot SPL is loaded from a file called MLO in FAT filesystem in the
+          first bootable partition, executes from SRAM
+        3. U-Boot is loaded from a file called u-boot.img in a FAT filesystem,
+          executes from DRAM
+        4. Linux kernel
+
     Now we reset the board...
       we get:
         U-Boot SPL 2024.04 (Aug 01 2026 - 17:27:34 +0200)
@@ -601,7 +610,20 @@
 
     Now we try to enable the "config" command and rebuild Uboot. This should
     give us a dump of all configuration settings.
+      Just rebuild and copy to the boot partition
 
-      md 0x9df33858 shows some stuff!
+      md 0x9df33858 shows some stuff in DRAM
+      md 0x44e07000 shows the first register of GPIO module
 
-      CONTINUE THE LAB
+    Now we configure networking in Uboot and then place a file in tftp server
+    for the board to pick up and load into RAM. Then we check the contents and
+    indeed it is in RAM :)
+
+
+-------------------------------------------------------------------------------
+CONTINUE IN SLIDE 166
+-------------------------------------------------------------------------------
+
+
+
+
