@@ -615,14 +615,124 @@
       md 0x9df33858 shows some stuff in DRAM
       md 0x44e07000 shows the first register of GPIO module
 
-    Now we configure networking in Uboot and then place a file in tftp server
-    for the board to pick up and load into RAM. Then we check the contents and
-    indeed it is in RAM :)
+    Now we configure networking in Uboot. We also add tftp server in the host.
+    We connect a USB cable and then place a file in tftp server. The board can
+    ftfp into the host and get the file and load it into RAM. Then we check the
+    contents and indeed it is in RAM :)
+
+  *********************************************************
 
 
 -------------------------------------------------------------------------------
-CONTINUE IN SLIDE 166
+5. Linux Kernel intro
 -------------------------------------------------------------------------------
+
+  The kernel sits between libraries/user apps and the hardware.
+
+  +-------------------+   Call to    +----------+   Manage   +----------+
+  |    [User app B]   |   services   |          |  hardware  |          |
+  | [Library A][App A]|------------->|  Linux   |----------->|          |
+  |    [C library]    |<-------------|  kernel  |<-----------| Hardware |
+  +-------------------+ Event notif.,+----------+   Event    +----------+
+                        info exp.                  notif.
+
+  The linux kernel main roles are:
+    - managing the hardware resources, CPU, memory, IO, etc.
+    - provide a set of hardware and architecture independent APIs to allow the
+      user and libraries to access applications
+    - handle concurrency and usage limits of hardware, e.g. different apps trying
+      to use a single network interface
+
+  System calls:
+    - main interface between kernel and user space
+    - about 400!
+    - file and device operations, networking operations, IPC, process management,
+      memory mapping, timers, threads, etc.
+    - system calls are wrapped by the C library. user space applications use the
+      C library function instead of a direct call
+
+  Linux makes system and kernel information available via pseudo-filesystems:
+    - proc mounted on /proc: OS related info
+    - sysfs mounted on /sys: system representation as a device tree
+
+  Linux is released officially every 10 weeks. Each stable branch has a 2 week
+  merge window and 6 to 10 week bug-fixing period - after this a new stable
+  branch happens.
+    - LTS releases also get latest security and bug fixes (for at least 2 years)
+    - Some commercial distributios have much longer support, e.g. Wind River Linux
+
+    - Mainline versions, released by Linus Torvalds:
+    https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+
+    - Stable versions, released by maintainers group:
+    https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+
+  Many semiconductor vendors supply their own Linux sources:
+    - focus on HW support first
+    - suitable for PoCs
+    - may break support for other platforms/devices : not important
+
+  Complete kernel sources:
+    https://kernel.org/pub/linux/kernel
+    but nowadays most people just use Git
+
+    Going through the sources: https://elixir.bootlin.com
+
+  ************************** Lab **************************
+  Downloading the linux kernel sources.
+  *********************************************************
+
+  Kernel configuration:
+    - the process of defining which options the kernel should be compiled with
+      depends e.g. on architecture or capabilities you might want
+
+    - happens via Makefiles
+    - you need to define architecture via ARCH and the toolchain via CROSS_COMPILE.
+
+    - Initial kernel configuration ideas:
+      - Desktop or server: copz from /boot/config-`uname -r`
+      - Embedded: defaults stored in arch/<arch>/configs -> you'll see many defconfigs
+
+    - A tool like make menuconfig aids making changes.
+      - Configuration is overwritten to file .config
+      - It's possible to save your configuration in a defconfig file
+      - store in arch/<arch>/configs/myown_defconfig so that you can "make" with it
+
+  Kernel image:
+    - a single file, resulting from linking all object files
+    - loaded into memory by the bootloader
+    - all features available as soon as kernel starts
+
+  Kernel modules:
+    - device drivers, file systems can be compiled as modules
+    - loadable dynamically
+    - stored as a separate file in a filesystem (so fs is mandatory to use modules)
+
+  Types of kernel options:
+    - bool (include/exclude)
+    - tristate (include in image/include as module/exclude)
+    - int
+    - hex
+    - string
+
+  Dependencies:
+    - config B depends on A : B is not visible until A is enabled
+    - config A select B : when A is enabled, B is enabled too (cannot be disabled manually)
+
+  xconfig:
+    - GUI to configure the kernel
+    - easy to load files, serach, etc
+
+  make menuconfig:
+    - similar in style to UBoot
+
+  Frequent problem: revert to an old configuration. Solution: use .config.old
+
++++++++++++CONTINUE IN SLIDE 201+++++++++++
+
+
+
+
 
 
 
