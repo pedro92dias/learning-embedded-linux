@@ -726,14 +726,161 @@
   make menuconfig:
     - similar in style to UBoot
 
-  Frequent problem: revert to an old configuration. Solution: use .config.old
+  Frequent problem: revert to an old configuration. Solution: use .config.old as
+  back up copy that you can copy to .config
 
-+++++++++++CONTINUE IN SLIDE 201+++++++++++
+  Kernel compilation:
+  - make only works at top level directory
+  - make -j<n> distributes the build job through multiple threads
+
+  Faster recompilation can be achieved by using the ccache compiler cache:
+  export CROSS_COMPILE="ccache arm-linux-"
+
+  Compilation results:
+  - arch/<arch>/boot/Image, uncompressed kernel image, bootable
+  - arch/<arch>/boot/*Image*, compressed kernel image, bootable
+    - bzImage: x86
+    - zImage: ARM
+    - Image.gz: RISCV
+    - vmlinux.bin.gz: ARC, etc...
+  - arch/<arch>/boot/dts/<vendor>/*.dtb, compiled Device Tree Blobs
+  - .ko files are Kernel Modules and are spread over the source tree
+  - vmlinux is a raw, uncompressed kernel image in ELF format, for debugging purposes
+    (not booting)
+
+  Native kernel installation
+  - sudo make install: installs by default in the host system
+    - installs /boot/vmlinuz-<version>, the compressed kernel image, same as in
+      arch/<arch>/boot/
+    - installs /boot/System.map-<version>, stores symbol addresses for debugging
+      purposes (obsolete)
+    - installs /boot/config-<version>, kernel configuration
+    - reruns bootloader configuration utility to make new kernel available in
+      the next boot
+
+  Embedded kernel installation
+  - make install rarely used in embedded
+    - kernel image is single file
+    - there is no way to deploy and load kernel image for all targets
+
+  Native module installation
+  - sudo make modules_install: installs modules by default in host system
+    - installs all modules in /lib/modules/<version>/
+      - kernel/, module .ko files
+      - modules.alias or modules.alias.bin, aliases for module loading utilities
+      - modules.dep or module.dep.bin, module dependencies
+      - module.symbols or module.symbols.bin, tells which module a given symbol
+        belongs to
+      - modules.builtin, list of build-in modules of the kernel
+
+  Embedded module installation
+  - can't directly use make modules_install because it would install the modules
+    in /lib/modules (the host fs not target fs)
+    - INSTALL_MOD_PATH variable is needed to generate the module related files
+      and install the modules in the target root fs instead of host root fs
+      make INSTALL_MOD_PATH=<dir>/ modules_install
+
+  Clean up targets for kernel make:
+    (remember that the instructions of make are called targets)
+  - clean: Remove most generated files but keep the config and enough build
+    support to build external modules
+  - mrproper: Remove all generated files + config + various backup files
+  - distclean: mrproper + remove editor backup and patch files
+  or, if on git, simply "git clean -fdx"
+
+  Overview of kernel build process:
+
+  Environment setup and configuration     Kernel building and deployment
+
+  +-----------------------------------+
+  | Specify target architecture       |
+  | (if different from host)          |
+  |                                   |
+  |   export ARCH=arm                 |
+  |                                   |
+  | Specify cross-compiler            |
+  | (if cross-compiling)              |
+  |                                   |
+  |   export CROSS_COMPILE=arm-linux- |
+  +-----------------------------------+
+                  |
+                  v
+  .---------------------------------.         .-------------------------.
+  (       Kernel configuration        )       (          Kernel           )
+  |                                   |       | Compile the kernel        |
+  | Get reference configuration:      |------>| and the modules           |
+  |  make soc_defconfig (ARM example) |       |                           |
+  |                                   |       | make                      |
+  | Customize configuration:          |        '-------------------------'
+  |  make menuconfig                  |                /         \
+  '---------------------------------'                /           \
+                                                    v             v
+                                        .-----------------. .-----------------.
+                                        (Install the kernel)( Install modules )
+                                        |                  | |                 |
+                                        | make install     | | make            |
+                                        | or manual copy   | | modules_install |
+                                        '-----------------'  '-----------------'
+
+  Hardware description:
+  - embedded architectures have a lot of non-discoverable devices, serial ports,
+    ethernet, i2c, nand flash, usb controllers, etc.
+  - description of the hardware to the kernel can be made via:
+    - x86: ACPI tables
+    - most embedded devices: OpenFirmware Device Tree (DT)
+
+  Device trees:
+  - developers write Device Tree Sources, which compile to Device Tree Blobs
+    DTS ---compilation---> DTB
+  - there is one device tree per board/platform
+  - can be found in arch/<arch>/boot/dts/<vendor>/<board>.dtb
+  - the user may customize to add external devices, configure pin muxing or
+    system parameters like flash partition
+
+  Booting via Uboot:
+  - ARM32
+    - Boot zImages files via command bootz
+  - ARM64 or RISCV
+    - Boot Image files via command booti
+  - UBoot should also pass a DTB to the kernel:
+  Typical flow:
+  1. load zImage to address X
+  2. load <board>.DTB at address Y
+  3. boot[z|i] X - Y
+      (- indicates no initramfs)
+
+  Kernel command line
+  - adjusts kernel behaviour without recompilation
+  - arguments very important for system configuration
+    - root= for root file system
+    - console= destination of kernel messages
+    - many more: https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
+
+  Kernel log
+  - messages are kept in a size adjustable (CONFIG_LOG_BUF_SHIFT) buffer
+  - dmesg displays the available kernel log messages
 
 
 
+  ************************** Lab **************************
+  Kernel cross-compiling
 
+  Selected the base defconfig.
 
+  Going through menuconfig and finetune the support needed in
+  kernel.
 
+    Interesting to find ways o navigate the hundreds of options.
 
+  Then build the kernel and look at the output folders.
 
+  TFTP the kernel image and device tree blob to BBB. Then boot.
+  We see a panic because there's no root filesystem to mount.
+
+  Modify bootcmd so that it automatically does the tftp transfer
+  and boot.
+
+  Very cool, it works!
+  *********************************************************
+
+CONTINUE IN SLIDE 217

@@ -113,6 +113,8 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 - commit -m "<message>" : commit to the repository
 - push : update remote repository from your local
 - pull : fetch from repository or branch
+- checkout <...> creates a local branch starting from ...
+- branch -a shows all available branches
 
 ## Symbolic links:
 
@@ -468,7 +470,7 @@ See examples
   - quit : exit
 
 
-## U-Boot shell commands:
+## U-Boot (uboot) shell commands:
 
     - help
     - version
