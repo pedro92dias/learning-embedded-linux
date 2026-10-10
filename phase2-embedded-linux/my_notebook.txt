@@ -863,14 +863,14 @@
 
 
   ************************** Lab **************************
-  Kernel cross-compiling
+   - Kernel cross-compiling -
 
   Selected the base defconfig.
 
   Going through menuconfig and finetune the support needed in
   kernel.
 
-    Interesting to find ways o navigate the hundreds of options.
+    Interesting to find ways to navigate the hundreds of options.
 
   Then build the kernel and look at the output folders.
 
@@ -883,4 +883,87 @@
   Very cool, it works!
   *********************************************************
 
-CONTINUE IN SLIDE 217
+
+-------------------------------------------------------------------------------
+6. Linux Root Filesystem
+-------------------------------------------------------------------------------
+
+  Filesystems:
+    - used to organize data in directories and files
+    - in UNIX, applications see a single global hierarchy of dirs and files,
+      can also be composed of several filesystems
+    - filesystems are mounted in a specific location (mount point)
+    - mount points allow applications to access files, regardless of actual
+      physical storage location
+
+  Root filesystem:
+    - a particular filesystem mounted at the root of the hierarchy, identified
+      by /
+    - mount and umount are programs, so files inside the root filesystem
+    - the root fs is the first mounted file system, mounted by the kernel
+    - kernel option root=
+    - kernel panics without a root fs (as seen in the lab)
+    - can be mounted from USB key, hard disk, SD card, NAND flash, NFS protocol,
+      etc...
+
+  Mounting rootfs from storage devices:
+    - Hard disk or USB key:
+      root=/dev/sdXY, X is a letter for the device, Y a number for the partition
+    - Partitions of a SD card:
+      root=/dev/mmcblkXpY, X device, Y partition
+    - Flash storage:
+      root=/dev/mtdblockX, X partition number
+
+  Mounting rootfs from network:
+    - root=/dev/nfs
+    - the rootfs could be a directory in the host Linux machine, exported via
+      NFS server
+    - target can have a NFS client built into the kernel
+    - very convenient for development, when there is no storage available yet
+
+    On host:
+    1. install an NFS server
+    2. add the exported directory to the /etc/exports file and specify the client
+       IP and options
+    3. export by asking the NFS server to reload the file
+
+    On target:
+    1. the kernel needs to be built with NFS client support
+    2. kernel must be booted with options to specify the target IP, the NFS server
+       IP and details and other parameters...
+
+  +-------------------------------+                +----------------------------+
+  |                 Host          |                |                Target      |
+  |                               |                |                            |
+  |             NFS server        |                |             NFS client     |
+  |                               |   Networking   |      built into the kernel |
+  | /home/tux/rootfs/             |<-------------->| /                          |
+  | /home/tux/rootfs/root/        |                | /root/                     |
+  | /home/tux/rootfs/root/README  |                | /root/README               |
+  | /home/tux/rootfs/usr/         |                | /usr/                      |
+  | /home/tux/rootfs/usr/bin/     |                | /usr/bin/                  |
+  | /home/tux/rootfs/bin/         |                | /bin/                      |
+  | /home/tux/rootfs/bin/ls       |                | /bin/ls                    |
+  +-------------------------------+                +----------------------------+
+
+  Mounting rootfs from memory:
+    - boot the system with a filesystem in memory: initramfs
+    - either compressed CPIO archive integrated in the kernel image
+    - or from an archived loaded into device memory
+    - extracted at boot time
+    - good for very fast booting because very small
+    - good as intermediate step before switching to real rootfs
+
+    Create external initramfs
+    1. create a compressed CPIO archive
+    2. include the archive in a Uboot container
+    3. load the kernel binary, DTB and uInitramfs in RAM
+
+    Also possible to have the kernel include a built-in initramfs
+    1. config the kernel option to point to a directory or a cpio archive
+       or to a file describing the contents
+    2. make
+    3. then the kernel image (zImage or bzImage) contains the kernel code/data
+        and also the rootfs as a compressed cpio archive
+
+CONTINUE 232

@@ -419,7 +419,27 @@ https://dev.to/gervaisamoah/add-a-new-ssh-key-for-github-on-your-new-computer-54
 https://zah.uni-heidelberg.de/it-guide/ssh-tutorial-linux
 
 
-## Getting around an SD Card
+## Filesystems
+
+- mount: shows all currently mounted filesystems
+
+- sudo mount -t vfat /dev/sda1 /mnt/<my_mount_point>: mounts a storage device
+    mount -t type device mountpoint
+      t: if the type
+      device: storage device
+        Hard disk or USB key:
+         root=/dev/sdXY, X is a letter for the device, Y a number for the partition
+        Partitions of a SD card:
+         root=/dev/mmcblkXpY, X device, Y partition
+        Flash storage:
+         root=/dev/mtdblockX, X partition number
+      mountpoint: the directory where files of the storage device will be accessible
+
+- umount: unmount filesystems, ensures that linux commits any cached writes to
+          the storage device, e.g. before rebooting or unplugging
+
+
+  Getting around an SD Card:
 
 - ls -l /dev/mmc*
   or
