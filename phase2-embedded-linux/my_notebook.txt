@@ -966,4 +966,132 @@
     3. then the kernel image (zImage or bzImage) contains the kernel code/data
         and also the rootfs as a compressed cpio archive
 
-CONTINUE 232
+  Root filesystem organization:
+    - well defined by Filesystem Hierarchy Standard
+      https://refspecs.linuxfoundation.org/fhs.shtml
+
+    - /bin: basic programs
+
+    - /boot: kernel images, configurations, initramfs (not common)
+
+    - /dev: deice files
+
+    - /etc: system-wide config
+
+    - /home: user home directories
+
+    - /lib: basic libraries
+
+    - /media: mount points for removable media
+
+    - /mnt: mount points for temporary mounted filesystem
+
+    - /proc: mount points for the proc virtual filesystem,
+        - exposes statistics about running processes, memory management, system
+        params, etc.
+        - contains one directory per running process
+        - contains details about files opened by the process, CPU usage, etc.
+        - /proc/interrupts, /proc/cmdline, /proc/cpuinfo are interesting
+
+    - /root: home directory of root user
+
+    - /run: runtime variable data
+
+    - /sbin: basic system programs
+
+    - /sys: mount point of the sysfs virtual system
+        - sysfs represents the vision that the kernel has of buses, devices and
+          drivers
+
+    - /tmp: temporary files
+
+    - /usr/bin: non-basic programs
+
+    - /usr/lib: non-basic libs
+
+    - /usr/sbin: non-basic system programs
+
+    - /var: variable data files, for system services
+
+  Basic applications:
+    - in order to work, Linux needs a few applications:
+      - an init: the first user space application started by the kernel
+        responsible for starting all other user applications and services
+        (in desktops = systemd)
+      - a shell: to implement scripts, automate tasks or allow user interaction
+      - basic unix executables: mv, cp, mkdir, cat, ls...
+    - these components must be integrated in the root filesystem to make it usable
+
+  Overall boot process:
+
+  +--------------------------------------------------------------------------+
+  |                                Bootloader                                |
+  |             Loads the DTB and kernel to RAM, starts the kernel           |
+  +--------------------------------------------------------------------------+
+                                      |
+                                      v
+  +--------------------------------------------------------------------------+
+  |                                  Kernel                                  |
+  |               Initializes hardware devices and kernel subsystems         |
+  |                Mounts the root filesystem indicated by root=             |
+  |                 Starts the init application, /sbin/init by default       |
+  +--------------------------------------------------------------------------+
+                                      |
+                                      v
+  +--------------------------------------------------------------------------+
+  |                                Rootfs                                    |
+  |                                                                          |
+  | +----------------------------------------------------------------------+ |
+  | |                             /sbin/init                               | |
+  | |             Starts other user space services and applications        | |
+  | +----------------------------------+-----------------------------------+ |
+  |                                    |                                     |
+  |                  +-----------------+-----------------+                   |
+  |                  |                                   |                   |
+  |                  v                                   v                   |
+  |        +-------------------+               +-------------------+         |
+  |        |       Shell       |               |Other applications |         |
+  |        +-------------------+               +-------------------+         |
+  +--------------------------------------------------------------------------+
+
+
+-------------------------------------------------------------------------------
+7. BusyBox
+-------------------------------------------------------------------------------
+
+  Linux needs a basic set of programs:
+  - init
+  - shell
+  - basic utilities
+
+    In normal Linux, these are different projects... Lots of stuff to integrate.
+    BusyBox is an integrated alternative solution, popular in embedded.
+
+  https://www.busybox.net/
+
+  BusyBox in the root filesystem:
+  - all utilities are compiled into a single executable in /bin/busybox
+  - all applications are symbolically linked to busybox
+  - can be pretty small (<500KB)
+
+  Can be configured similarly to Linux:
+  - make defconfig : regular options
+  - make allnoconfig : unselects all
+  - make menuconfig : visual menu configuration
+    - choose what commands to compile
+    - choose which features is suppoted on each command
+
+  Compiling BusyBox:
+  1. set cross-compiler, as usual
+  2. set the installation directory
+  3. add the cross-compiler path to PATH
+  4. compile with make
+  5. install it : creates a UNIX directory structure with sym links to the executable
+
+  Features:
+  - includes an implementation of init program
+    - single file
+    - allows to configure what services start at startup, control shutdown...
+
+
+CONTINUE 255
