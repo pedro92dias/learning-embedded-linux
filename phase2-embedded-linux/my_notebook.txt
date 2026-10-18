@@ -1094,4 +1094,49 @@
     - allows to configure what services start at startup, control shutdown...
 
 
-CONTINUE 255
+  ************************** Lab **************************
+
+    1. make sure that the kernel was built to support booting a filesystem
+      over network-fileshare (NFS)
+    2. setup the NFS server on the host
+    3. change bootargs in the uboot to tell the kernel to mount the rootfile
+      system via NFS, the target IP address, the nfsroot, some settings...
+    4. boot - we go furter now: [    3.183720] VFS: Mounted root (nfs filesystem) on device 0:16
+    5. error because no init was found devtmpfs isn't on /dev
+    6. now we work on fixing that by building busybox
+      6.1 we download the sources of busybox
+      6.2 select some nice options with menuconfig
+      6.3 build
+      6.4 install (to the path selected in menuconfig)
+    7. now there is what looks more and more like a rootfile system in /nfsroot
+      7.1 I can see all the sym links now (e.g. /sbin/init points to /bin/busybox)
+    8. now we easily create some startup stuff in the host machine (nfs rootfs)
+      8.1 easy to test right away
+      8.2 we create a /etc/inittab, the configuration file of /sbin/init
+        8.2.1 we tell inittab that the default shell shall be in a terminal device
+              ttyS0::askfirst:/bin/sh
+              rather than the default console
+              ::askfirst:/bin/sh
+      8.3 this config file points to /etc/init.d/rcS start up script
+      8.4 we add fun things in the script:
+        8.4.1 mount proc on /proc  --> test by running ps
+        8.4.2 mount sysfs on /sys
+    9. now we compile and then try to run hello.c
+      9.1 doesn't work because its dynamically linked
+      9.2 find the dynamic linker and copy it to /lib
+      9.3 since the dynamic linker already contains the C library, the program
+          executes just fine :)
+    10. now recompile busybox statically - everything works because we have the
+        lib in the file system now
+    11. now enable http server and add some web interface
+      11.1 works very cool :)
+
+  ********************************************************
+
+CONTINUE AT 256
+
+
+
+
+
+

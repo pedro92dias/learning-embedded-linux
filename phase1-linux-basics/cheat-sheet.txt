@@ -421,9 +421,12 @@ https://zah.uni-heidelberg.de/it-guide/ssh-tutorial-linux
 
 ## Filesystems
 
-- mount: shows all currently mounted filesystems
+- mount: shows all currently mounted filesystem
 
 - sudo mount -t vfat /dev/sda1 /mnt/<my_mount_point>: mounts a storage device
+  mount -t proc proc /proc : mounts the pseudo-filesystem proc
+  mount -t sysfs none /sys : mounts the pseudo-filesystem sysfs
+
     mount -t type device mountpoint
       t: if the type
       device: storage device
