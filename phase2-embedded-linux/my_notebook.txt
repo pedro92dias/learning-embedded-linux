@@ -1133,7 +1133,89 @@
 
   ********************************************************
 
-CONTINUE AT 256
+-------------------------------------------------------------------------------
+7. Accessing hardware devices
+-------------------------------------------------------------------------------
+
+  Kernel Drivers:
+
+      (example of a GPIO expander controlled by i2c)
+
+      +-----------------------+     application accesses the standard kernel/
+      |      Application      |     user-space interface via library or directly
+      +-----------------------+     (see below)
+          |             |
+          v             |
+      +---------+       |
+      | Library |       |            e.g. libgiod
+      +---------+       |
+          |             |
+          v             v
+      =========================  Userspace
+      Kernel/userspace interface     e.g. /dev/gpiochipXYZ
+      =========================  Kernel
+          |
+          v
+      +-----------------------+     exposes features of a certain class of devices
+      |    Driver subsystem   |     through a standard kernel/user-space interface
+      +-----------------------+     e.g. GPIO subsystem
+          |
+          v
+      +-----------------------+     drives a particular devices connected to a bus
+      |     Device driver     |     e.g. gpio-pca953x --> controls PCA9537 GPIO lines
+      +-----------------------+
+          |
+          v
+      +-----------------------+     provides API for drivers to access a bus
+      |     Bus subsystem     |     e.g. I2C subsystem
+      +-----------------------+
+          |
+          v
+      +-----------------------+     drives an I2C, SPI, USB, PCI controller
+      | Bus controller driver |     e.g. i2c-stm32f7 --> controls i2c controller in chip
+      +-----------------------+
+
+    - There are numerous kernel subsystems for device classes:
+      - Networking stack over Ethernet, WiFi, CAN, etc.
+      - GPIO
+      - Video4Linux
+      - DRM, GPU for video
+      - ALSA for audio
+      - PWM
+      - Input for keyboard, mouse, etc.
+      - Watchdog
+      - RTC for real-time clocks
+      - crypto for cryptography accelerators
+      - remoteproc for auxiliary processors
+      - ...
+
+    - Possible to access device drivers from user-space
+      - usually and preferrably, devices are controlled by a kernel driver
+      - also possible to access devices from user-space through /dev/
+      - useful for devices that do not fit in existing kernel subsystems
+      - kernel provides: i2c-dev, spidev, UIO, libusb, sysfs for PCI
+          e.g. https://docs.kernel.org/i2c/dev-interface.html
+
+      - user-space drivers make an application less portable
+      - user-space drivers make other kernel drivers not able to use the HW
+        e.g. write a touchscreen driver in user-space: standard Linux graphics
+             stack cannot use the touchscreen
+
+    - Drivers upstream and out-of-stream:
+      - upstream Linux kernel contains thousands of drivers
+      - reviewed and approved by community
+      - out-of-tree drivers are sometimes provided by device vendors
+      - compatibility and quality issues
+        - grep the Linux kernel tree to find kernel drivers
+          e.g. https://elixir.bootlin.com/linux/v7.3/source/drivers/gpio/gpio-pca953x.c
+          e.g. ~/embedded-linux-bbb-labs/kernel/linux$ git grep -i max7313
+               then read the Makefile to learn what you need to enable
+               need to enable CONFIG_GPIO_PCA953X
+
+
+  User-space interfaces to drivers:
+
+
 
 
 
