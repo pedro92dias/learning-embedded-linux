@@ -1215,6 +1215,101 @@
 
   User-space interfaces to drivers:
 
+    1. device nodes in /dev
+    2. entries in sysfs filesystem
+    3. network sockets and related APIs
+
+    Devices in /dev/:
+    - most devices are presented through two abstractions:
+      - character device: stream of bytes with no size, beginning or end
+      - block device: composed of fixed-size blocks that can be read or written
+    - internally identifiable via three informations (triplet):
+      - type (character or block)
+      - major (category of the device)
+      - minor (identifier of the device)
+
+    - ** everything is a file ** : devices can be manipulated with normal file APIs
+      - device file:
+        special type of file, stored in /dev/, exposes the triplet to user-space
+        applications through a filename
+      - example: /dev/ttyS0, /dev/tty1, /dev/sda ...
+
+    - creating dev files:
+      - done manually with "mknod" before Linux 2.6.32
+      - devtmpfs is a virtual filesystem that can be mounted on /dev
+      - kernel automatically creates and removes dev files from it
+      - CONFIG_DEVTMPFS_MOUNT is the kernel option to automatically mount devtmpfs
+        at boot time
+      - other solutions: udev, mdev
+
+    - Remember from before:
+      "
+          Linux makes system and kernel information available via pseudo-filesystems:
+          - proc mounted on /proc: OS related info
+          - sysfs mounted on /sys: system representation as a device tree
+      "
+
+      - all devices are visible in sysfs
+        - /dev is usually to access the device
+        - /sys usually only gives properties/information of the device
+      - sysfs contains:
+
+        ls /sys
+          block  bus  class  dev  devices  firmware  fs  hypervisor  kernel  module  power
+
+        - block/, symlinks to all block devices, in /sys/devices
+        - bus/, one sub-folder by type of bus
+        - class/, one sub-folder per class (category of devices): input, leds,
+          pwm, etc.
+        - dev/
+          - block/, one symlink per block device, named after major/minor
+          - char/, one symlink per character device, named after major/minor
+        - devices/, all devices in the system, organized in a slightly chaotic
+          way, see this article
+        - firmware/, representation of firmware data
+          - devicetree/, directory and file representation of Device Tree nodes
+            and properties
+        - fs/, properties related to filesystem drivers
+        - kernel/, properties related to various kernel subsystems
+        - module/, properties about kernel modules
+        - power/, power-management related properties
+
+        Example:
+          - /sys/bus/i2c/drivers: all device drivers for devices on i2c buses
+          - /sys/bus/i2c/devices: all devices on i2c buses
+            - /sys/bus/i2c/devices/0-002a: one device, contains symlinks:
+              - driver: symlink to driver directory /sys/bus/i2c/drivers
+              - of_node: symlink to the directory for the DT node describing the device
+
+            Cool example: echo 0 | sudo tee /sys/class/leds/tpacpi\:\:lid_logo_led/brightness
+
+      - other virtual filesystems:
+        - debugfs, mounted on /sys/kernel/debug
+        - configfs, mounted on /sys/kernel/config
+
+  Kernel Modules
+
+    - Why?
+      - keep the kernel minimal, load drivers on-demand depending on HW detected
+      - driver development, modify, test, without rebooting
+
+    - Files:
+      - compiled kernel module is .ko (kernel object)
+      - metada files modules.dep/.alias/.symbols/.builtin
+        + each file has an optimized "bin" file
+      - Installation in /lib/modules/<kernel-version>
+
+    - Dependencies:
+      - described in modules.dep and modules.dep.bin
+      - some modules must be loaded before others
+
+    - Aliases:
+      - described in module.alias
+      - allows to know which module to load based on different supported devices
+
+    -
+
+
 
 
 
