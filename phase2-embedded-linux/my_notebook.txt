@@ -453,6 +453,10 @@
         executes from DRAM
       4. Linux kernel
 
+      +----------+    +------------+    +--------------+    +------------+
+      | ROM code |--->| U-Boot SPL |--->|    U-Boot    |--->|Linux kernel|
+      +----------+    +------------+    +--------------+    +------------+
+
       Note: SPL = secondary program loader, a small, lightweight initial-stage binary
         see below
 
@@ -1307,13 +1311,122 @@
       - described in module.alias
       - allows to know which module to load based on different supported devices
 
-    -
+    - Utilities
+      - modinfo <module_name> for modules in /lib/modules
+      - e.g. modinfo usb_storage shows all the aliases
+      - lsmod, shows all loaded modules, sized and who uses them
+      - insmod, used to load a module: quite basic, doesn't handle dependencies
+      - rmmod, used to unload a module
+      - modprobe, more advanced way to load/unload modules
+        - possible to pass parameters for debugging or tweaking purposes
+        - e.g. modprobe usb-storage delay_use=0
+              (modprobe also supports configuration files /etc/modprobe.conf)
+
+    - All modules are visible in sysfs
+      - under /sys/module/<name>
+      - one file per parameter under <name>/parameters
+      - can be read or written,
+        e.g. cat /sys/module/usbcore/parameters/blinkenlights
+
+  Describing Non-Discoverable Hardware
+
+    Several methods:
+
+    1. directly in the OS/bootloader code
+      - using compiled datastructures, in C
+      - done in the past on most embedded platforms, in Linux/U-boot
+      - not maintinable
+
+    2. using ACPI tables
+      - on x86 systems
+      - tables provided by the FW
+
+    3. using a device tree
+      - originates from OpenFirmware (of)
+      - used by most embedded-oriented CPU architectures
+      - writing/tweaking a device tree is necessary when porting Linux to a new
+        board or connecting additional peripherals
+
+      Device Trees:
+
+        - tree data structure written in a .dts file (DT Source)
+        - processed bz a dtc (DT Compiler)
+        - compiler produces a more efficient representation .dtb (DT Blob)
+          - the .dtb describes hardware platform in an OS agnostic way
+          - a few dozens of KB
+          - DTB is also called a FDT (flattened device tree) once loaded into mem
+            - fdt command in U-boot
+            - fdt_ APIs
+
+        - Example:
+          (see folder, we run command "dtc -I dts -O dtb -o foo.dtb foo.dts" to
+           compile and then command "dtc -I dts -O dtb -o foo.dtb foo.dts" to
+           visualize the dtb)
+
+        - how to use the DTB blob?
+          - directly linked inside a bootloader binary, e.g. U-Boot
+          - passed to the OS via command line:
+            e.g. In U-boot would be "boot[z,i,m] <kernel-addr> - <dtb-addr>
+
+                     RAM
+                      |
+                      |
+              +---------------+
+              | Kernel code   |
+              |      +        |
+              |     data      |
+              +---------------+ <--- <kernel-addr>
+                      |
+                      |
+              +---------------+
+              |      DTB      |
+              +---------------+ <--- <dtb-addr>
+                      |
+                      |
+
+        - dts (sources) are, in practice, canonically located in the Linux kernel
+          sources:
+          - arch/<ARCH>/boot/dts/<vendor>
+            https://elixir.bootlin.com/linux/v7.3/source/arch/arm/boot/dts
+
+        Syntax:
+          - tree of nodes
+          - nodes have properties
+          - node = a device or IP block
+          - properties = device characteristics
+          - concept of cells in property values
+          - concept of phandle to point to other nodes
+          - dtc (compiler) only checks syntax
+
+            Example:
+            / {
+                node@0 {                      <-- [Node name: node] [Unit address: @0]
+                    /* Properties of node@0 */
+                    a-string-property = "A string";            <-- [Prop name]  [Prop value]
+                    a-string-list-property = "first", "second";
+                    a-byte-data-property = [0x01 0x23 0x34 0x56]; <-- [Bytestring]
+
+                    child-node@0 {
+                        first-child-property;
+                        second-child-property = <1>;
+                        a-reference-to-something = <&node1>;  <-- [Phandle (ref to node)]
+                    };
+
+                    child-node@1 {
+                    };
+                };
+
+                node1: node@1 {               <-- [Label: node1]
+                    an-empty-property;
+                    a-cell-property = <1 2 3 4>;              <-- [Four cells (32-bit values)]
+
+                    child-node@0 {
+                    };
+                };
+            };
 
 
-
-
-
-
+COTINUE IN slide 304
 
 
 
