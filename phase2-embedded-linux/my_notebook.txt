@@ -1425,8 +1425,38 @@
                 };
             };
 
+          Another bigger example in "dts" folder (missing headers, not compilable)
 
-COTINUE IN slide 304
+          - Device Tree files are not monolithic, they can be split and include
+            each other.
+          - .dtsi are included files
+          - .dts are final device trees
+          - inclusion via #include
+          - check the slides for more interesting inheritance examples...
+
+        Design principles:
+          - describe hardware, not its configuration (e.g. if its enabled)
+          - OS agnostic - no need to change DT when updating OS or using UBoot
+          - describe integration of hardware, not its internals
+            - integrations and connections, like IRQ lines, DMA channels, clocks...
+            - details and internals are handled by code in the device drivers
+
+          - How to write the correct nodes/properties to describe a platform?
+            - DT Specifications: base DT syntax + standard properties
+              https://www.devicetree.org/specifications/
+            - DT Bindings: docs that specify how a HW should be described
+              nowadays often in YAML https://elixir.bootlin.com/linux/latest/source/Documentation/devicetree/bindings
+
+        Validating DTs:
+          - dtc only checks syntax
+          - YAML bindings allow to do semantic validation
+          - make rules:
+            - make dt_binding_check: verify that YAML bindings are valid
+            - make dtbs_check: validate DTs currently enabled against YAML bindings
+            - make DT_SCHEMA_FILES=/path/to/yaml dtbs_check: validate DTs against a specific binding
+
+
+
 
 
 

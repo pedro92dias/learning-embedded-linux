@@ -1,0 +1,86 @@
+/dts-v1/; /* the required version header at the top of the file */
+
+/ {
+    #address-cells = <1>; /* how many "cells" (32-bits) are used to represent addresses */
+    #size-cells = <1>; /*  same for sizes */
+    model = "STMicroelectronics STM32MP157C-DK2 Discovery Board";
+    compatible = "st,stm32mp157c-dk2", "st,stm32mp157";
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>; /* no size specified, not applicable  */
+
+        cpu0: cpu@0 {
+            compatible = "arm,cortex-a7";
+            clock-frequency = <650000000>;
+            device_type = "cpu";
+            reg = <0>;
+        };
+
+        cpu1: cpu@1 {
+            compatible = "arm,cortex-a7";
+            clock-frequency = <650000000>;
+            device_type = "cpu";
+            reg = <1>;
+        };
+    };
+
+    memory@0 {
+        device_type = "memory";
+        reg = <0x0 0x20000000>; /* address (0x0) + size (512MB) */
+    };
+
+    chosen {
+        bootargs = "";
+        stdout-path = "serial0:115200n8";
+    };
+
+    intc: interrupt-controller@a0021000 { /* label: node */
+        compatible = "arm,cortex-a7-gic";
+        #interrupt-cells = <3>;
+        interrupt-controller;
+        reg = <0xa0021000 0x1000>,
+              <0xa0022000 0x2000>;
+    };
+
+    soc {
+        compatible = "simple-bus";
+        #address-cells = <1>;
+        #size-cells = <1>;
+        interrupt-parent = <&intc>;
+
+        i2c1: i2c@40012000 {
+            compatible = "st,stm32mp15-i2c";
+            reg = <0x40012000 0x400>;
+            interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>,
+                         <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            cs42l51: cs42l51@4a {
+                compatible = "cirrus,cs42l51";
+                reg = <0x4a>;
+                reset-gpios = <&gpiog 9 GPIO_ACTIVE_LOW>;
+                status = "okay";
+            };
+        };
+
+        ethernet0: ethernet@5800a000 {
+            compatible = "st,stm32mp1-dwmac", "snps,dwmac-4.20a";
+            reg = <0x5800a000 0x2000>;
+            interrupts-extended = <&intc GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
+            status = "okay";
+
+            mdio0 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                compatible = "snps,dwmac-mdio";
+
+                phy0: ethernet-phy@0 {
+                    reg = <0>;
+                };
+            };
+        };
+    };
+};
