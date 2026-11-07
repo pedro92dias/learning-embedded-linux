@@ -1342,7 +1342,7 @@
       - tables provided by the FW
 
     3. using a device tree
-      - originates from OpenFirmware (of)
+      - originates from OpenFirmware (of_ prefix)
       - used by most embedded-oriented CPU architectures
       - writing/tweaking a device tree is necessary when porting Linux to a new
         board or connecting additional peripherals
@@ -1444,16 +1444,189 @@
           - How to write the correct nodes/properties to describe a platform?
             - DT Specifications: base DT syntax + standard properties
               https://www.devicetree.org/specifications/
-            - DT Bindings: docs that specify how a HW should be described
+            - DT Bindings: docs that specify how a particular HW should be described
               nowadays often in YAML https://elixir.bootlin.com/linux/latest/source/Documentation/devicetree/bindings
 
         Validating DTs:
           - dtc only checks syntax
           - YAML bindings allow to do semantic validation
-          - make rules:
+          - make rules from Linux kernel:
             - make dt_binding_check: verify that YAML bindings are valid
             - make dtbs_check: validate DTs currently enabled against YAML bindings
-            - make DT_SCHEMA_FILES=/path/to/yaml dtbs_check: validate DTs against a specific binding
+            - make DT_SCHEMA_FILES=/path/to/yaml dtbs_check: validate DTs against
+              a specific binding
+
+        Properties:
+
+          - compatible:
+
+            - list of strings
+            - describes the specific finding to which the node complies
+            - identifies the programming model of the device
+            - the OS uses it to find the appropriate driver
+              e.g. compatible = "arm,armv7-timer";
+                   compatible = "st,stm32mp1-dwmac", "snps,dwmac-4.20a";
+
+            - *Platform Devices* are identified if:
+              - top-level device tree nodes with "compatible" string
+              - sub-nodes of "simple bus" (SOC, see simple.dts) like i2c/uart
+            - *I2C devices* or *SPI devices* are sub nodes of i2c/spi controller
+            - each Linux driver has a table of compatible strings
+              - when a DT node compatible matches, the device is BOUND to that
+                driver
+
+            Example platform driver, in this case uart:
+              https://elixir.bootlin.com/linux/latest/source/drivers/tty/serial/stm32-usart.c
+
+              static const struct of_device_id stm32_match[] = {
+                { .compatible = "st,stm32-uart", .data = &stm32f4_info},
+                { .compatible = "st,stm32f7-uart", .data = &stm32f7_info},
+                { .compatible = "st,stm32h7-uart", .data = &stm32h7_info},
+                {},
+              }; MODULE_DEVICE_TABLE(of, stm32_match); // <--- here
+
+              ...
+
+              static struct platform_driver stm32_serial_driver = {
+                .probe               = stm32_serial_probe,
+                .remove              = stm32_serial_remove,
+                .driver = {
+                  .name              = DRIVER_NAME,
+                  .pm                = &stm32_serial_pm_ops,
+                  .of_match_table    = of_match_ptr(stm32_match), // <--- here
+                },
+              };
+
+            Example i2c driver:
+              https://elixir.bootlin.com/linux/latest/source/sound/soc/codecs/cs42l51.c
+
+              const struct of_device_id cs42l51_of_match[] = {
+                { .compatible = "cirrus,cs42l51", },
+                { }
+              }; MODULE_DEVICE_TABLE(of, cs42l51_of_match); // <--- here
+
+              https://elixir.bootlin.com/linux/latest/source/sound/soc/codecs/cs42l51-i2c.c
+
+              static struct i2c_driver cs42l51_i2c_driver = {
+                .driver = {
+                  .name = "cs42l51",
+                  .of_match_table = cs42l51_of_match, // <--- here
+                  .pm = &cs42l51_pm_ops,
+                },
+                .probe = cs42l51_i2c_probe,
+                .remove = cs42l51_i2c_remove,
+                .id_table = cs42l51_i2c_id,
+              };
+
+          - reg:
+
+            - most important property after compatible.
+            - describes physical address and size of MM registers
+            - describes address of I2C bus
+            - describes SPI chip select ID number
+            - e.g.
+              sai4: sai@50027000 {
+                reg = <0x50027000 0x4>, <0x500273f0 0x10>; // multiple reg areas
+              };
+
+              &i2c1 {
+                hdmi-transmitter@39 {
+                  reg = <0x39>;
+                };
+                cs42l51: cs42l51@4a {
+                  reg = <0x4a>;
+                };
+              };
+
+          - status:
+
+            - indicated whether the device is in use or not
+            - "ok"/"okay" in use, "disabled" not in use
+            - in .dtsi files (included base dts files) all devices have "disabled"
+            - enabled then in .dts per device
+
+        Resources:
+          - a common pattern for things that can be shared by multiple blocks
+            e.g. interrupt lines, clock controllers, DMA controllers, etc.
+          - DT node describes controller as device
+
+          - example in resources.dts
+
+          - Pin muxing example:
+            - modern SoCs mux the pins for different purposes, e.g. GPIO, UART,
+              SPI, I2C...
+            - the pinmux controller is the IP block controlling this
+
+            e.g.
+            Pin mux *controller* in STM32MP1 (dtsi file)
+            https://elixir.bootlin.com/linux/v6.1/source/arch/arm/boot/dts/st/stm32mp151.dtsi
+
+            pinctrl: pin-controller@50002000 {
+              #address-cells = <1>;
+              #size-cells = <1>;
+              compatible = "st,stm32mp157-pinctrl";
+              ...
+              gpioa: gpio@50002000 { ... };
+              gpiob: gpio@50003000 { ... };
+              gpioc: gpio@50004000 { ... };
+              gpiod: gpio@50005000 { ... };
+              gpioe: gpio@50006000 { ... };
+              gpiof: gpio@50007000 { ... };
+              ...
+            };
+
+            pinctrl_z: pin-controller-z@54004000 {
+              #address-cells = <1>;
+              #size-cells = <1>;
+              compatible = "st,stm32mp157-z-pinctrl";
+              ranges = <0 0x54004000 0x400>;
+              ...
+              gpioz: gpio@54004000 { .... };
+              ...
+            };
+
+            Pin mux *configuration* for STM32MP15 (dtsi file)
+            https://elixir.bootlin.com/linux/v6.1/source/arch/arm/boot/dts/st/stm32mp15-pinctrl.dtsi
+
+            &pinctrl {
+              ...
+              i2c1_pins_a: i2c1-0 {
+                pins {
+                  pinmux = <STM32_PINMUX('D', 12, AF5)>, /* I2C1_SCL */
+                           <STM32_PINMUX('F', 15, AF5)>; /* I2C1_SDA */
+                  bias-disable;
+                  drive-open-drain;
+                  slew-rate = <0>;
+                };
+              };
+              ...
+              m_can1_pins_a: m-can1-0 {
+                pins1 {
+                  pinmux = <STM32_PINMUX('H', 13, AF9)>; /* CAN1_TX */
+                  slew-rate = <1>;
+                  drive-push-pull;
+                  bias-disable;
+                };
+                pins2 {
+                  pinmux = <STM32_PINMUX('I', 9, AF9)>; /* CAN1_RX */
+                  bias-disable;
+                };
+              };
+              ...
+            };
+
+            Now pin-muxing consumer:
+            (board specific .dts)
+
+            &i2c1 {
+              pinctrl-names = "default", "sleep";
+              pinctrl-0 = <&i2c1_pins_a>;
+              pinctrl-1 = <&i2c1_sleep_pins_a>;
+              ...
+            };
+
+            CONTINUE 336
+
 
 
 
