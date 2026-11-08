@@ -542,7 +542,7 @@
       https://u-boot.readthedocs.io/en/latest/develop/distro.html
       - kernel_addr_r : address in RAM to load the kernel image
       - ramdisk_addr_r : address in RAM to load the initramfs image
-      - fdt_addr_r : address in RAM to load the flattened device tree
+      - fdt_addr_r : address in RAM to load the flattened device tree (=DTB blob)
       - pxefile_addr_r : address in RAM to load the configuration file (below)
       - bootfile : path configuration file e.g /boot/extlinux/extlinux.conf
 
@@ -1432,7 +1432,9 @@
           - .dtsi are included files
           - .dts are final device trees
           - inclusion via #include
+          - use the ampersand & (phandle) to refer (and not repeat) nodes
           - check the slides for more interesting inheritance examples...
+          ---> the youtube video explains this btter than the slides
 
         Design principles:
           - describe hardware, not its configuration (e.g. if its enabled)
@@ -1461,11 +1463,11 @@
           - compatible:
 
             - list of strings
-            - describes the specific finding to which the node complies
+            - describes the specific binding (YAML) to which the node complies
             - identifies the programming model of the device
-            - the OS uses it to find the appropriate driver
+            - the OS uses it to find the appropriate driver --> the most important
               e.g. compatible = "arm,armv7-timer";
-                   compatible = "st,stm32mp1-dwmac", "snps,dwmac-4.20a";
+                   compatible = "st,stm32mp1-dwmac", "snps,dwmac-4.20a"; (2 compatible)
 
             - *Platform Devices* are identified if:
               - top-level device tree nodes with "compatible" string
@@ -1625,10 +1627,66 @@
               ...
             };
 
-            CONTINUE 336
+          An example: LED
+          - how to describe an LED connected to the DK1 platform
+          1. create arch/arm/boot/dts/st/stm32mp157a-dk1-custom.dts
+             this includes stm32mp157a-dk1.dts
+
+              #include "stm32mp157a-dk1.dts"
+              / {
+                leds {
+                  compatible = "gpio-leds";
+                  webinar {
+                    label = "webinar";
+                    gpios = <&gpioe 1 GPIO_ACTIVE_HIGH>;
+                  };
+                };
+              };
+
+          2. ensure that stm32mp157a-dk1-custom.dts gets compiled to dtb (blob).
+             for that change arch/arm/boot/dts/st/Makefile
+              dtb-$(CONFIG_ARCH_STM32) +=
+                ...
+                stm32mp157a-dk1.dtb
+                stm32mp157a-dk1-custom.dtb
+                ...
+
+          3. make dtbs
+          4. easy test via shell echo 255 > /sys/class/leds/webinar/brightness
+
+          - now same thing with an I2C temperature, humidity and pressure sensor:
+
+            stm32mp157a-dk1-custom.dts:
+            &i2c5 {
+              status = "okay";
+              clock-frequency = <100000>;
+              pinctrl-names = "default", "sleep";
+              pinctrl-0 = <&i2c5_pins_a>;
+              pinctrl-1 = <&i2c5_pins_sleep_a>;
+
+              pressure@76 {
+                compatible = "bosch,bme280";
+                reg = <0x76>;
+              };
+            };
+
+            then we can see in shell:
+            # cat /sys/bus/iio/devices/iio:device2/
+            in_humidityrelative_input
+            49147
+            # cat /sys/bus/iio/devices/iio:device2/in_pressure_input
+            101.567167968
+            # cat /sys/bus/iio/devices/iio:device2/in_temp_input
+            24380
+
+      Some tips learned from this video:
+      https://www.youtube.com/watch?v=a9CZ1Uk3OYQ
+
+      1. /sys/firmware/devicetree/base is a directory representation of DT contents
+      2. you can unpack the DT if you have dtc: dtc -I fs /sys/.../base
 
 
-
+CONTINUE AT SLIDE 342
 
 
 

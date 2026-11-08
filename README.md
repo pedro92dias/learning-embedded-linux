@@ -45,6 +45,7 @@ _My goals are roughly:_
     - Crosstool-ng: https://github.com/crosstool-ng/crosstool-ng
     - Uboot sources: https://elixir.bootlin.com/u-boot/v2026.07/source/
     - Uboot FIT image: https://www.thegoodpenguin.co.uk/blog/u-boot-fit-image-overview/
+    - more stuff in the notebook!
 
 --------------------------------------------------------------------------------
 
