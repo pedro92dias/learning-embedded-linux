@@ -1715,8 +1715,13 @@
       - play around with the sys/class/gpio interface to set the GPIO direction
         and toggle it...
 
+    - Now rebuild kernel with a few extra options: CONFIG_LEDS_CLASS=y,
+    CONFIG_LEDS_GPIO=y and CONFIG_LEDS_TRIGGER_TIMER=y
+    - copy to ftfp and restart the board
+    - control the LED
 
-        CONTINUE IN PAGE 27
+
+    CONTINUE IN PAGE 27 - i2c device
 
   ********************************************************
 
