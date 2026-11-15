@@ -1288,7 +1288,10 @@
             Cool example: echo 0 | sudo tee /sys/class/leds/tpacpi\:\:lid_logo_led/brightness
 
       - other virtual filesystems:
-        - debugfs, mounted on /sys/kernel/debug
+        - debugfs, mounted on /sys/kernel/debug:
+           "A simple, RAM-based virtual filesystem designed for kernel
+            developers to export internal data, metrics, and debugging info
+            to user space."
         - configfs, mounted on /sys/kernel/config
 
   Kernel Modules
@@ -1686,7 +1689,36 @@
       2. you can unpack the DT if you have dtc: dtc -I fs /sys/.../base
 
 
-CONTINUE AT SLIDE 342
+  ************************** Lab **************************
+    Notes to remember:
+    - TFTP server is located at /srv/tftp
+    - bootcmd on the Uboot right now is:
+         bootcmd=tftp 0x81000000 zImage;
+         sleep 0.1;
+         tftp 0x82000000 am335x-boneblack.dtb;
+         bootz 0x81000000 - 0x82000000
+    - My NFS server is located at ~/embedded-linux-bbb-labs/tinysystem/nfsroot/
+
+    - We explore /dev/, containing device files
+    - We explore /sys/class, containing system device controls
+      e.g. cat /sys/class/net/ for the network controller
+               /sys/class/thermal for temp sensors
+    - We explore /sys/bus/, containing physical and virtual buses
+      e.g. /sys/bus/mmc/devices shows all MMC devices
+
+    - Now we rebuild the kernel with CONFIG_GPIO_SYSFS, CONFIG_DEBUG_FS and
+      CONFIG_DEBUG_FS_ALLOW_ALL
+        All enabled already in fact :)
+    - Mount debug file system
+      - explore the GPIO banks and see their usage
+      - connected a basic LED circuit in a breadboard (P9, pin 1 GND, pin 12 GPIO)
+      - play around with the sys/class/gpio interface to set the GPIO direction
+        and toggle it...
+
+
+        CONTINUE IN PAGE 27
+
+  ********************************************************
 
 
 
